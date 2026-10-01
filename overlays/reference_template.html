@@ -1,0 +1,71 @@
+<title>CTPG Settings Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#f5f7f8;--surface:#ffffff;--ink:#0f1b24;--muted:#51626e;--rule:#d5dde2;--accent:#0e7f7c;--amber:#8a6508;--mark:#fff1b8;
+--sans:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0b141b;--surface:#111e27;--ink:#e4ecef;--muted:#9aabb5;--rule:#243540;--accent:#3cc9c4;--amber:#e0b54a;--mark:#4a3d0a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0b141b;--surface:#111e27;--ink:#e4ecef;--muted:#9aabb5;--rule:#243540;--accent:#3cc9c4;--amber:#e0b54a;--mark:#4a3d0a}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1180px;margin:0 auto}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);padding-block:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+header.top h1{font-size:18px;margin:0;flex:1 1 220px}
+header.top input{flex:2 1 260px;min-width:0;font:14px var(--mono);padding:8px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink)}
+header.top .cnt{font:12px var(--mono);color:var(--muted)}
+.stamp{font:12px var(--mono);color:var(--muted);margin:12px 0}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 20px;font-size:14px}
+nav.toc a{color:var(--accent);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+h2{font-size:22px;margin:36px 0 10px;padding-top:8px;border-top:3px solid var(--accent);text-wrap:balance}
+h3{font-size:17px;margin:22px 0 8px;color:var(--accent)}
+.intro{color:var(--muted);max-width:70ch}
+details.it{background:var(--surface);border:1px solid var(--rule);border-radius:6px;margin:6px 0}
+details.it>summary{cursor:pointer;padding:8px 12px;font-weight:700;list-style-position:inside}
+details.it>summary .t{font:12px var(--mono);color:var(--muted);font-weight:400;margin-left:8px}
+details.it>.c{padding:0 12px 12px;overflow-x:auto}
+details.it.hit>summary{background:var(--mark)}
+</style>
+<style>
+details.it>summary .t{font-weight:700}
+details.it>summary .sub{font:12px var(--mono);color:var(--muted);margin-left:10px;font-weight:400}
+details.code{margin:8px 0;border-left:3px solid var(--amber);padding-left:10px}
+details.code>summary{cursor:pointer;font:13px var(--mono);color:var(--amber)}
+pre{font:12.5px/1.45 var(--mono);background:var(--bg);border:1px solid var(--rule);border-radius:4px;padding:10px;overflow-x:auto;white-space:pre;max-height:70vh}
+.c>table,.c pre{max-width:100%}
+table.kv{border-collapse:collapse;font-size:13.5px;width:100%;margin:4px 0}
+table.kv td,table.kv th{border-top:1px solid var(--rule);padding:4px 8px;vertical-align:top;text-align:left}
+table.kv th{font:600 12.5px var(--mono);color:var(--muted);white-space:nowrap;width:1%}
+table.kv table.kv{margin:0;background:var(--surface)}
+table.kv.list th{color:var(--accent)}
+.s{font-family:var(--mono);font-size:12.5px;word-break:break-word;white-space:pre-wrap}
+.num{font-family:var(--mono);color:var(--accent);font-variant-numeric:tabular-nums}
+.b{font-family:var(--mono);color:var(--amber);font-weight:600}
+.n{font-family:var(--mono);color:var(--muted)}
+.m{font-family:var(--mono);color:var(--muted);font-style:italic}
+section{scroll-margin-top:70px}
+@media (max-width:600px){table.kv th{white-space:normal}}
+</style>
+<div class="wrap">
+<header class="top"><h1>CTPG Settings Reference</h1><input id="q" type="search" placeholder="Search every setting (e.g. Disneyland Weather, 4018, pause)"><span class="cnt" id="cnt"></span></header>
+<p class="stamp">Generated read-only from your files on {{STAMP}}. Secrets are hidden. Nothing in your setup was changed.</p>
+<nav class="toc">{{NAV}}</nav>
+{{BODY}}
+</div>
+<script>
+(function(){
+  var q=document.getElementById('q'),cnt=document.getElementById('cnt'),items=[].slice.call(document.querySelectorAll('details.it')),t;
+  items.forEach(function(d){d._txt=null});
+  function run(){
+    var v=q.value.trim().toLowerCase(),n=0;
+    items.forEach(function(d){
+      if(!v){d.hidden=false;d.open=false;d.classList.remove('hit');return}
+      if(d._txt===null)d._txt=d.textContent.toLowerCase();
+      var m=d._txt.indexOf(v)>=0;d.hidden=!m;d.open=m;d.classList.toggle('hit',m);if(m)n++;
+    });
+    document.querySelectorAll('section').forEach(function(s){var any=!v||s.querySelector('details.it:not([hidden])');s.hidden=!any;});
+    cnt.textContent=v?(n+' matching items'):(items.length+' items');
+  }
+  q.addEventListener('input',function(){clearTimeout(t);t=setTimeout(run,200)});
+  run();
+})();
+</script>

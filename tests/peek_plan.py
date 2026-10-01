@@ -1,0 +1,10 @@
+import re, json, urllib.request, sys
+sys.stdout.reconfigure(encoding="utf-8")
+s = open(r"C:\StreamerBot\ctpg-pack\planner_key.js", encoding="utf-8").read()
+url = re.search(r"url\s*[:=]\s*['\"]([^'\"]+)", s).group(1); key = re.search(r"key\s*[:=]\s*['\"]([^'\"]+)", s).group(1)
+st = json.load(urllib.request.urlopen(urllib.request.Request(url + "/api/state?key=" + key, headers={"User-Agent": "Mozilla/5.0 ctpg-peek"}), timeout=15))
+d = st.get("display", {})
+print("hereId", st.get("hereId"), "parks", [(p.get("id"), p.get("name")) for p in st.get("parks", [])])
+print("now", st.get("now")); print("nextId", st.get("nextId")); print("settings", st.get("settings"))
+print("display.next", d.get("next")); print("display.shows", d.get("shows"))
+for p in st.get("plan", []): print("plan", {k: p.get(k) for k in ("id", "name", "type", "time", "parkId", "done")})

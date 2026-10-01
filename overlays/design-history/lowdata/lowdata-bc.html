@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Low Signal Card</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Montserrat:wght@600;800&display=swap">
+<!-- CTPG low-signal card, matched to the CTPG "Stay Connected" card: royal blue panel + light panel,
+     Oswald navy headline, Montserrat body, yellow-to-orange button gradient, soft light-blue border.
+     OBS browser source 1920x1080, or 1080x1920 with ?layout=vertical.
+     Link settings: ?layout=vertical  ?msg=Your%20text  ?pos=top  ?size=1.2  ?previewbg=image.jpg (testing only) -->
+<style>
+  :root{
+    --navy:#0B2545; --royal:#1A5BAD; --royal-deep:#12447F; --paper:#F4F8FC; --line:#9ECAE8; --muted:#3D5A80;
+    --sun:#FFD84A; --orange:#FF9F1C;
+    --head:"Oswald","Arial Narrow",Impact,sans-serif; --body:"Montserrat","Segoe UI",Arial,sans-serif; --size:1;
+  }
+  html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent}
+  html.vertical,html.vertical body{width:1080px;height:1920px}
+  html.vertical{--size:1.35}
+  body{background-size:cover;background-position:center}
+
+  #card{position:absolute;left:40px;bottom:48px;zoom:var(--size);display:flex;overflow:hidden;
+    border-radius:16px;border:1.5px solid var(--line);background:var(--paper);
+    box-shadow:0 10px 26px rgba(4,20,45,.45);
+    opacity:0;transform:translateY(24px);animation:enter .6s cubic-bezier(.2,1.2,.4,1) .2s forwards}
+  html.pos-top #card{bottom:auto;top:40px}
+  html.vertical #card{left:36px;bottom:250px}
+  @keyframes enter{to{opacity:1;transform:none}}
+
+  /* left: royal blue panel with the signal bars */
+  .side{width:74px;display:grid;place-items:center;background:linear-gradient(160deg,var(--royal),var(--royal-deep))}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:30px}
+  .bars b{width:7px;border-radius:2px;background:#fff}
+  .bars b:nth-child(1){height:30%}
+  .bars b:nth-child(2){height:55%}
+  .bars b:nth-child(3){height:78%;background:rgba(255,255,255,.28);animation:try 2.4s ease-in-out infinite}
+  .bars b:nth-child(4){height:100%;background:rgba(255,255,255,.28);animation:try 2.4s ease-in-out .3s infinite}
+  @keyframes try{0%,50%,100%{background:rgba(255,255,255,.28)}60%,72%{background:var(--sun)}}
+
+  /* right: light panel, headline, short line, loading bar in the button gradient */
+  .body{position:relative;padding:11px 20px 15px 16px;display:flex;flex-direction:column;gap:3px}
+  .kick{font-family:var(--body);font-weight:800;font-size:10.5px;letter-spacing:.16em;color:var(--royal);text-transform:uppercase}
+  .title{font-family:var(--head);font-weight:700;font-size:27px;line-height:1;letter-spacing:.02em;color:var(--navy);text-transform:uppercase;white-space:nowrap}
+  .msg{font-family:var(--body);font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap}
+  .load{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(26,91,173,.12);overflow:hidden}
+  .load i{position:absolute;top:0;bottom:0;width:40%;border-radius:4px;background:linear-gradient(90deg,var(--sun),var(--orange));animation:sweep 1.6s ease-in-out infinite}
+  @keyframes sweep{0%{left:-40%}100%{left:100%}}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}#card{opacity:1;transform:none}.load i{left:0;width:100%}}
+</style></head>
+<body>
+<div id="card">
+  <div class="side"><div class="bars"><b></b><b></b><b></b><b></b></div></div>
+  <div class="body">
+    <div class="kick">Cruise &amp; Theme Park Guide</div>
+    <div class="title">Low Signal</div>
+    <div class="msg" id="msg">Still live, hang tight!</div>
+    <div class="load"><i></i></div>
+  </div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get('layout') === 'vertical') document.documentElement.classList.add('vertical');
+  if (q.get('pos') === 'top') document.documentElement.classList.add('pos-top');
+  if (q.get('msg')) document.getElementById('msg').textContent = q.get('msg');
+  if (q.get('size')) document.documentElement.style.setProperty('--size', q.get('size'));
+  if (q.get('previewbg')) document.body.style.backgroundImage = 'url(' + q.get('previewbg') + ')';
+</script>
+</body></html>

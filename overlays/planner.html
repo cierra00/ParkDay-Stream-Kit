@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CTPG Stream Planner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap">
+<style>
+  :root{--teal:#1FB8B4;--teal-d:#0E7F7C;--navy:#0B1E2E;--navy2:#13324B;--sun:#FFC933;--pink:#FF4F9A;--violet:#7A3CF0;--ink:#EAF6F6;--muted:#9FC3C8;--line:#24506B;
+    --display:"Lilita One","Arial Black",sans-serif;--body:"Nunito","Segoe UI",Arial,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--navy);color:var(--ink);font-family:var(--body);font-size:16px}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:grid;grid-template-columns:1.2fr 1fr;gap:22px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  h1{font-family:var(--display);font-weight:400;font-size:40px;margin:0;color:#fff}
+  h1 span{color:var(--sun)}
+  h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 12px;color:var(--sun)}
+  .card{background:var(--navy2);border:3px solid var(--line);border-radius:18px;padding:18px}
+  .col{display:flex;flex-direction:column;gap:22px}
+  label{font-weight:800;font-size:14px;color:var(--muted);display:block;margin-bottom:6px}
+  select,input[type=text],input[type=time]{width:100%;font:inherit;font-weight:800;color:var(--navy);background:#fff;border:2px solid transparent;border-radius:10px;padding:9px 10px}
+  select:focus,input:focus{outline:none;border-color:var(--teal)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .toggle{display:flex;align-items:center;gap:10px;font-weight:800;cursor:pointer}
+  .toggle input{width:22px;height:22px;accent-color:var(--pink)}
+  button{font:inherit;font-weight:900;border:0;border-radius:12px;padding:10px 16px;cursor:pointer}
+  .btn-main{background:var(--sun);color:var(--navy);font-size:18px;padding:12px 22px}
+  .btn-teal{background:var(--teal);color:#fff}
+  .btn-ghost{background:transparent;color:var(--muted);border:2px solid var(--line)}
+  button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .status{font-weight:800;color:var(--muted)}
+  .status.ok{color:#7CF0B0}.status.err{color:#FF8FA8}
+  .shows{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto;padding-right:4px}
+  .show{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04)}
+  .show.on{background:rgba(31,184,180,.18)}
+  .show input{width:20px;height:20px;accent-color:var(--teal)}
+  .show .nm{font-weight:800}
+  .show .tm{font-size:13px;color:var(--muted);text-align:right}
+  .show .tag{font-size:11px;font-weight:900;background:var(--violet);color:#fff;border-radius:6px;padding:1px 6px;margin-left:6px}
+  .stops{display:flex;flex-direction:column;gap:8px}
+  .stop{display:grid;grid-template-columns:130px 1fr auto auto;gap:8px;align-items:center}
+  .stop .cd{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .stop .cd input{width:18px;height:18px;accent-color:var(--pink)}
+  .x{background:transparent;color:#FF8FA8;font-size:20px;padding:4px 10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{background:rgba(255,255,255,.08);color:var(--ink);padding:6px 12px;border-radius:99px;font-size:14px}
+  .preview{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:3px solid var(--teal);
+    background:repeating-conic-gradient(#1c3a52 0 25%,#16304a 0 50%) 0 0/28px 28px}
+  .preview iframe{position:absolute;left:0;top:0;width:1920px;height:1080px;border:0;transform-origin:0 0}
+  .hint{font-size:14px;color:var(--muted);margin:8px 0 0}
+  .empty{color:var(--muted);font-weight:700;padding:8px 0}
+  @media (max-width:860px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Stream <span>Planner</span></h1>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <span class="status" id="status">Not saved yet</span>
+      <button class="btn-main" id="save">Save to overlays</button>
+    </div>
+  </header>
+
+  <div class="col">
+    <section class="card">
+      <h2>Today's park</h2>
+      <div class="row">
+        <div><label for="park">Park</label><select id="park"></select></div>
+        <div><label for="start">Stream start (Starting Soon countdown)</label><input type="time" id="start"></div>
+      </div>
+      <div style="margin-top:14px"><label class="toggle"><input type="checkbox" id="party"> Party night (Halloween / Christmas party shows)</label></div>
+    </section>
+
+    <section class="card">
+      <h2>Countdowns from the park schedule</h2>
+      <p class="hint" style="margin:0 0 10px">Tick the shows you want a countdown for. Times update live all day, so if the park moves a show, the overlay follows.</p>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn-teal" id="loadShows">Load today's shows</button>
+        <button class="btn-ghost" id="bigOnly">Just the big ones</button>
+        <button class="btn-ghost" id="none">Clear</button>
+      </div>
+      <div class="shows" id="shows"><div class="empty">Pick a park, then press "Load today's shows".</div></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <h2>My stops</h2>
+      <div class="stops" id="stops"></div>
+      <div style="margin-top:10px"><button class="btn-teal" id="addStop">+ Add a stop</button></div>
+      <div class="chips" id="quick"></div>
+      <p class="hint">These show up as NEXT on the overlay. Tick "count down" for anything the park schedule doesn't have (a meetup, a special event).</p>
+    </section>
+
+    <section class="card">
+      <h2>Preview</h2>
+      <div class="preview" id="pv"><iframe id="frame" title="Overlay preview"></iframe></div>
+      <p class="hint">Shows the saved plan with the "Riding" scene. Save to refresh it.</p>
+    </section>
+  </div>
+</div>
+
+<script src="parkdata.js"></script>
+<script src="plan.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const P = window.CTPG_PARKDATA;
+const NAMES = {"magic kingdom":"Magic Kingdom","epcot":"EPCOT","hollywood studios":"Hollywood Studios","animal kingdom":"Animal Kingdom",
+  "disneyland":"Disneyland","california adventure":"California Adventure","universal studios florida":"Universal Studios Florida",
+  "islands of adventure":"Islands of Adventure","epic universe":"Epic Universe","universal studios hollywood":"Universal Studios Hollywood"};
+const QUICK = ["Rope Drop","Snack Break","Lunch","Dinner","Park Hop","Shopping","Meet & Greet","Water Break"];
+
+// ---------- state (starts from the current plan.js) ----------
+const cur = window.CTPG_PLAN || {};
+let state = {
+  park: cur.park || "Magic Kingdom",
+  party: !!cur.party,
+  startTime: cur.startTime || "",
+  items: Array.isArray(cur.items) ? cur.items.map(i => ({...i})) : [],
+  watch: Array.isArray(cur.watch) ? cur.watch.slice() : [],
+};
+let shows = []; // from the park schedule
+
+// ---------- park + options ----------
+for (const [k,v] of Object.entries(NAMES)){ const o = document.createElement('option'); o.value = v; o.textContent = v; $('park').appendChild(o); }
+$('park').value = Object.values(NAMES).find(n => n.toLowerCase() === String(state.park).toLowerCase()) || "Magic Kingdom";
+$('party').checked = state.party; $('start').value = state.startTime;
+$('park').onchange = () => { state.park = $('park').value; state.watch = []; shows = []; renderShows(); loadShows(); dirty(); };
+$('party').onchange = () => { state.party = $('party').checked; renderShows(); dirty(); };
+$('start').onchange = () => { state.startTime = $('start').value; dirty(); };
+
+// ---------- shows from the API ----------
+async function loadShows(){
+  $('shows').innerHTML = '<div class="empty">Loading the park schedule…</div>';
+  try {
+    const r = await P.listShows(state.park);
+    if (!r.ok) throw new Error();
+    shows = r.shows;
+    if (!state.watch.length) state.watch = shows.filter(s => s.headliner).map(s => s.name);
+    renderShows();
+  } catch(e){ $('shows').innerHTML = '<div class="empty">Couldn\'t reach the park schedule. Check the internet connection and try again.</div>'; }
+}
+function renderShows(){
+  if (!shows.length){ if (!$('shows').querySelector('.empty')) $('shows').innerHTML = '<div class="empty">No shows loaded.</div>'; return; }
+  $('shows').innerHTML = '';
+  for (const s of shows){
+    const times = s.times.filter(t => state.party || !t.party);
+    if (!times.length) continue;
+    const on = state.watch.includes(s.name);
+    const el = document.createElement('label'); el.className = 'show' + (on ? ' on' : '');
+    el.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="nm"></span><span class="tm"></span>`;
+    el.querySelector('.nm').textContent = s.label;
+    if (s.times.some(t => t.party)) el.querySelector('.nm').insertAdjacentHTML('beforeend','<span class="tag">PARTY</span>');
+    el.querySelector('.tm').textContent = times.map(t => fmt(t.time)).join(', ');
+    el.querySelector('input').onchange = e => {
+      state.watch = e.target.checked ? [...new Set([...state.watch, s.name])] : state.watch.filter(n => n !== s.name);
+      el.classList.toggle('on', e.target.checked); dirty();
+    };
+    $('shows').appendChild(el);
+  }
+}
+$('loadShows').onclick = loadShows;
+$('bigOnly').onclick = () => { state.watch = shows.filter(s => s.headliner).map(s => s.name); renderShows(); dirty(); };
+$('none').onclick = () => { state.watch = []; renderShows(); dirty(); };
+
+// ---------- my stops ----------
+function renderStops(){
+  const box = $('stops'); box.innerHTML = '';
+  if (!state.items.length) box.innerHTML = '<div class="empty">No stops yet.</div>';
+  state.items.forEach((it, i) => {
+    const row = document.createElement('div'); row.className = 'stop';
+    row.innerHTML = `<input type="time" aria-label="Time"><input type="text" aria-label="Stop" placeholder="e.g. Big Thunder Mountain">
+      <label class="cd"><input type="checkbox"> count down</label><button class="x" title="Remove">×</button>`;
+    const [t, l] = row.querySelectorAll('input'); const cd = row.querySelector('.cd input');
+    t.value = it.time || ''; l.value = it.label || ''; cd.checked = !!it.show;
+    t.onchange = () => { it.time = t.value; dirty(); };
+    l.oninput = () => { it.label = l.value; dirty(); };
+    cd.onchange = () => { it.show = cd.checked; dirty(); };
+    row.querySelector('.x').onclick = () => { state.items.splice(i,1); renderStops(); dirty(); };
+    box.appendChild(row);
+  });
+}
+function addStop(label=''){
+  const last = state.items.length ? state.items[state.items.length-1].time : '';
+  let time = '09:00';
+  if (last){ const [h,m] = last.split(':').map(Number); const n = Math.min(23*60+59, h*60+m+60); time = String(Math.floor(n/60)).padStart(2,'0') + ':' + String(n%60).padStart(2,'0'); }
+  state.items.push({ time, label }); renderStops(); dirty();
+  const rows = $('stops').querySelectorAll('.stop'); rows[rows.length-1].querySelector('input[type=text]').focus();
+}
+$('addStop').onclick = () => addStop();
+QUICK.forEach(q => { const b = document.createElement('button'); b.className = 'chip'; b.textContent = '+ ' + q; b.onclick = () => addStop(q); $('quick').appendChild(b); });
+
+// ---------- build + save plan.js ----------
+function buildPlan(){
+  const items = state.items.filter(i => i.time && i.label && i.label.trim()).map(i => ({ time:i.time, label:i.label.trim(), ...(i.show ? {show:true} : {}) }))
+    .sort((a,b) => a.time.localeCompare(b.time));
+  const plan = { park: state.park, party: state.party, startTime: state.startTime || undefined, items, watch: state.watch, onlyWatch: state.watch.length > 0, skip: [] };
+  return `// Saved by Stream Planner on ${new Date().toLocaleString()}.\n// Open planner.html to change it (or edit by hand).\nwindow.CTPG_PLAN = ${JSON.stringify(plan, null, 2)};\n`;
+}
+function dirty(){ setStatus('Unsaved changes', ''); }
+function setStatus(t, cls){ $('status').textContent = t; $('status').className = 'status ' + (cls || ''); }
+
+// Remember the plan.js file between visits (the browser asks permission once).
+const DB = () => new Promise((res, rej) => { const r = indexedDB.open('ctpg-planner', 1); r.onupgradeneeded = () => r.result.createObjectStore('h'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+async function getHandle(){ try { const db = await DB(); return await new Promise(r => { const q = db.transaction('h').objectStore('h').get('plan'); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); } catch(e){ return null; } }
+async function putHandle(h){ try { const db = await DB(); db.transaction('h','readwrite').objectStore('h').put(h, 'plan'); } catch(e){} }
+
+$('save').onclick = async () => {
+  const text = buildPlan();
+  if (!window.showSaveFilePicker){ copyFallback(text); return; }
+  try {
+    let h = await getHandle();
+    if (h && (await h.requestPermission({ mode:'readwrite' })) !== 'granted') h = null;
+    if (!h){
+      h = await showSaveFilePicker({ suggestedName:'plan.js', types:[{ description:'Plan file', accept:{ 'text/javascript':['.js'] } }] });
+      if (h.name !== 'plan.js'){ setStatus('Pick the plan.js file in your ctpg-pack folder', 'err'); return; }
+      await putHandle(h);
+    }
+    const w = await h.createWritable(); await w.write(text); await w.close();
+    setStatus('Saved ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) + '. Overlays update within 30 seconds', 'ok');
+    reloadPreview();
+  } catch(e){ if (e && e.name === 'AbortError') setStatus('Save cancelled', 'err'); else copyFallback(text); }
+};
+async function copyFallback(text){
+  try { await navigator.clipboard.writeText(text); setStatus('Couldn\'t save directly. Plan copied: paste it into plan.js', 'err'); }
+  catch(e){ setStatus('Couldn\'t save. Open this page in Microsoft Edge or Chrome', 'err'); }
+}
+
+// ---------- preview ----------
+function fitPreview(){ const w = $('pv').clientWidth; $('frame').style.transform = `scale(${w/1920})`; }
+function reloadPreview(){ $('frame').src = 'overlay.html?now=Riding&t=' + Date.now(); }
+window.addEventListener('resize', fitPreview);
+
+function fmt(hhmm){ let [h,m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h%12 || 12; return `${h}:${String(m).padStart(2,'0')} ${ap}`; }
+
+renderStops(); fitPreview(); reloadPreview(); loadShows();
+</script>
+</body>
+</html>

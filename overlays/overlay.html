@@ -1,0 +1,505 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CTPG Now / Next</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@800;900&display=swap">
+<style>
+  /* Cruise & Theme Park Guide overlay. Canvas: 1920x1080, transparent. */
+  :root{
+    --teal:#1FB8B4; --teal-dark:#0E7F7C; --navy:#0B1E2E; --sun:#FFC933; --pink:#FF4F9A; --violet:#7A3CF0; --white:#FFFFFF;
+    --display:"Lilita One","Arial Black",Impact,sans-serif;
+    --body:"Nunito","Segoe UI",Arial,sans-serif;
+  }
+  html,body{margin:0;width:1920px;height:1080px;background:transparent;overflow:hidden}
+  *{box-sizing:border-box}
+
+  /* ---------- NOW / NEXT CARD (bottom left) ---------- */
+  #card{position:absolute;left:40px;bottom:44px;min-width:560px;max-width:1180px;
+    background:linear-gradient(135deg,rgba(11,30,46,.92),rgba(11,30,46,.82));
+    border:5px solid var(--teal);border-radius:26px;padding:18px 26px 20px 22px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.12) inset;
+    display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:12px;align-items:center;
+    transform:translateX(-120%);animation:slideIn .9s cubic-bezier(.2,1.3,.4,1) .2s forwards;overflow:hidden}
+  @keyframes slideIn{to{transform:translateX(0)}}
+  #card::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.22) 45%,transparent 60%);
+    transform:translateX(-120%);animation:shine 14s ease-in-out 2s infinite}
+  @keyframes shine{0%,85%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+  .chip{font-family:var(--display);font-size:30px;letter-spacing:.04em;padding:6px 16px 4px;border-radius:12px;line-height:1;text-align:center;min-width:112px}
+  .chip.now{background:var(--teal);color:var(--white);text-shadow:0 2px 0 var(--teal-dark);display:flex;align-items:center;gap:10px;justify-content:center}
+  .chip.next{background:var(--sun);color:var(--navy)}
+  .dot{width:14px;height:14px;border-radius:50%;background:#FF3B3B;box-shadow:0 0 0 0 rgba(255,59,59,.8);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,59,59,.8)}70%{box-shadow:0 0 0 12px rgba(255,59,59,0)}100%{box-shadow:0 0 0 0 rgba(255,59,59,0)}}
+
+  .val{font-family:var(--display);color:var(--white);line-height:1.05;
+    -webkit-text-stroke:2px #06121c;paint-order:stroke fill;text-shadow:0 4px 0 rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip.now{align-self:start;margin-top:2px}
+  #nowBlock{display:flex;flex-direction:column;gap:4px;min-width:0}
+  #nowLabel{font-family:var(--body);font-weight:900;font-size:24px;line-height:1.1;color:var(--sun);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+  #now{font-size:58px;max-width:100%}
+  #now.two{white-space:normal;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.02}
+  #icon,#wait{display:none}
+
+  /* ================= LOOKS (overlay.html?look=ticket|bar|sign) ================= */
+  .cat-ride{--cat:#1FB8B4;--ink:#0E7F7C} .cat-line{--cat:#FFB020;--ink:#B26A00} .cat-eat{--cat:#FF4F9A;--ink:#C2185B}
+  .cat-show{--cat:#7A3CF0;--ink:#5B21B6} .cat-meet{--cat:#FF7A1A;--ink:#C2410C} .cat-shop{--cat:#22B573;--ink:#15803D}
+  .cat-explore{--cat:#3B8FF0;--ink:#1D4ED8} .cat-fireworks{--cat:#C026D3;--ink:#86198F} .cat-parade{--cat:#0EA5E9;--ink:#0369A1}
+  .cat-concert{--cat:#F43F5E;--ink:#BE123C} .cat-travel{--cat:#6366F1;--ink:#4338CA} .cat-hop{--cat:#E8384F;--ink:#B91C1C} .cat-none{--cat:#1FB8B4;--ink:#0E7F7C}
+  body.look #card{background:none;border:0;box-shadow:none;padding:0;overflow:visible;max-width:1000px;min-width:0;
+    grid-template-columns:auto minmax(0,1fr) auto;column-gap:0;row-gap:12px;align-items:stretch}
+  body.look #card::after{display:none}
+  body.look #card::before{content:"";grid-area:1/1/2/4;z-index:0}
+  body.look .chip.now{display:none!important}
+  body.look #icon{display:grid;place-items:center;grid-area:1/1/2/2;z-index:1}
+  body.look #icon svg{fill:none;stroke-linecap:round;stroke-linejoin:round}
+  body.look #nowBlock{grid-area:1/2/2/3;z-index:1;justify-content:center;gap:2px}
+  body.look #wait{display:flex;flex-direction:column;align-items:center;justify-content:center;grid-area:1/3/2/4;z-index:1}
+  body.look #wait.hidden{display:none!important}
+  body.look #wait b{font-family:var(--display);font-weight:400;line-height:.9}
+  body.look #wait small{font-family:var(--body);font-weight:900;letter-spacing:.08em}
+  body.look #nextChip{grid-area:2/1/3/2;align-self:center;justify-self:stretch}
+  body.look #next{grid-area:2/2/3/4;justify-self:start;align-self:center}
+  body.look #nowLabel{margin-top:0}
+  body.look #card.nonow::before,body.look #card.nonow #icon,body.look #card.nonow #nowBlock,body.look #card.nonow #wait{display:none!important}
+  body.look #next:empty{display:none}
+  body.look #nextChip,body.look #next{z-index:1}
+
+  /* --- TICKET: cream park ticket with a colored stub --- */
+  body.look-ticket #card::before{background:#FFF8EC;border-radius:24px;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+  body.look-ticket #icon{width:132px;min-height:132px;background:var(--cat);border-radius:24px 0 0 24px;border-right:5px dashed #FFF8EC}
+  body.look-ticket #icon svg{width:74px;height:74px;stroke:#fff;color:#fff;stroke-width:2.3}
+  body.look-ticket #nowBlock{padding:16px 30px 16px 26px}
+  body.look-ticket #nowLabel{color:var(--ink);font-size:28px}
+  body.look-ticket #now{color:#0B1E2E;-webkit-text-stroke:0;text-shadow:none;font-size:62px}
+  body.look-ticket #nowSub{color:#557085;font-size:27px}
+  /* round sticker on the corner (same as the Sign look) */
+  body.look-ticket #card{margin-top:40px}
+  body.look-ticket #wait{grid-area:1/3/2/4;align-self:start;width:132px;height:132px;border-radius:50%;background:var(--sun);color:#0B1E2E;border:6px solid #fff;
+    margin:-46px -38px 0 6px;transform:rotate(8deg);box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:2;padding:0}
+  body.look-ticket #wait b{font-size:60px} body.look-ticket #wait small{font-size:14px;color:#0B1E2E}
+  html.vertical body.look-ticket #wait{width:150px;height:150px;margin-right:-24px}
+  html.vertical body.look-ticket #wait b{font-size:70px}
+  body.look-ticket #nextChip{margin:0 14px 0 0;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+  body.look-ticket #next{background:rgba(11,30,46,.92);padding:8px 22px 6px;border-radius:14px;font-size:38px;-webkit-text-stroke:0;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+
+  /* --- BAR: dark lower-third strip, color edge per activity, NEXT on the right --- */
+  body.look-bar #card{max-width:1600px;grid-template-columns:auto minmax(0,auto) auto auto;grid-template-rows:auto auto;row-gap:0}
+  body.look-bar #card::before{grid-area:1/1/3/5;background:rgba(11,30,46,.92);border-radius:20px;border-bottom:7px solid var(--cat);box-shadow:0 10px 26px rgba(0,0,0,.45)}
+  body.look-bar #icon{grid-area:1/1/3/2;width:112px;background:var(--cat);border-radius:20px 0 0 20px;margin-bottom:-7px}
+  body.look-bar #icon svg{width:62px;height:62px;stroke:#fff;color:#fff;stroke-width:2.4}
+  body.look-bar #nowBlock{grid-area:1/2/3/3;padding:14px 28px 18px}
+  body.look-bar #nowLabel{color:var(--cat);font-size:26px;filter:brightness(1.3)}
+  body.look-bar #now{font-size:56px}
+  body.look-bar #nowSub{font-size:25px}
+  body.look-bar #wait{grid-area:1/3/3/4;align-self:center;margin:0 6px 7px 0;padding:6px 18px;border-radius:16px;background:var(--cat);color:#0B1E2E}
+  body.look-bar #wait b{font-size:54px} body.look-bar #wait small{font-size:15px}
+  body.look-bar #nextChip{grid-area:1/4/2/5;align-self:end;justify-self:stretch;background:none;color:var(--sun);font-family:var(--body);font-weight:900;font-size:22px;
+    letter-spacing:.12em;text-align:left;padding:0 30px 2px 24px;min-width:0;border-left:3px solid rgba(255,255,255,.18);margin-left:18px}
+  body.look-bar #next{grid-area:2/4/3/5;align-self:start;justify-self:stretch;font-size:36px;max-width:520px;white-space:normal;text-wrap:balance;line-height:1.08;
+    padding:0 30px 18px 24px;border-left:3px solid rgba(255,255,255,.18);margin-left:18px;-webkit-text-stroke:0}
+  body.look-bar #next .t{display:block;font-size:26px;font-family:var(--body);font-weight:900}
+
+  /* --- SIGN: bold park wayfinding sign in the activity color --- */
+  body.look-sign #card{margin-top:40px}
+  body.look-sign #card::before{background:var(--cat);border:6px solid #fff;border-radius:30px;box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 -10px 0 rgba(0,0,0,.12)}
+  body.look-sign #icon{width:112px;height:112px;margin:20px 0 20px 22px;background:#fff;border-radius:50%;align-self:center}
+  body.look-sign #icon svg{width:66px;height:66px;stroke:var(--cat);color:var(--cat);stroke-width:2.6}
+  body.look-sign #nowBlock{padding:18px 30px 22px 22px}
+  body.look-sign #nowLabel{align-self:flex-start;background:#fff;color:var(--ink);font-size:24px;padding:4px 14px 3px;border-radius:10px;margin-bottom:6px}
+  body.look-sign #now{font-size:62px;-webkit-text-stroke:3px #0B1E2E}
+  body.look-sign #nowSub{color:#fff;font-size:27px;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+  body.look-sign #wait{grid-area:1/3/2/4;align-self:start;width:124px;height:124px;border-radius:50%;background:var(--sun);color:#0B1E2E;border:6px solid #fff;
+    margin:-44px -34px 0 0;transform:rotate(8deg);box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:2}
+  body.look-sign #wait b{font-size:56px} body.look-sign #wait small{font-size:14px}
+  body.look-sign #nextChip{margin:0 14px 0 0;border:4px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+  body.look-sign #next{background:rgba(11,30,46,.92);padding:8px 22px 6px;border-radius:14px;border:4px solid #fff;font-size:38px;-webkit-text-stroke:0}
+
+  /* --- looks on the vertical canvas --- */
+  html.vertical body.look #card{left:40px;right:40px;bottom:80px;max-width:none}
+  html.vertical body.look #now{font-size:76px}
+  html.vertical body.look #nowLabel{font-size:34px}
+  html.vertical body.look #nowSub{font-size:32px}
+  html.vertical body.look #next{font-size:44px}
+  html.vertical body.look-ticket #icon{width:150px}
+  html.vertical body.look-ticket #icon svg,html.vertical body.look-sign #icon svg{width:84px;height:84px}
+  html.vertical body.look-sign #icon{width:132px;height:132px}
+  html.vertical body.look-bar #card{grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;row-gap:12px}
+  html.vertical body.look-bar #card::before{grid-area:1/1/2/4}
+  html.vertical body.look-bar #icon{grid-area:1/1/2/2;width:140px}
+  html.vertical body.look-bar #nowBlock{grid-area:1/2/2/3}
+  html.vertical body.look-bar #wait{grid-area:1/3/2/4;margin-right:18px}
+  html.vertical body.look-bar #nextChip{grid-area:2/1/3/2;align-self:center;background:var(--sun);color:#0B1E2E;font-family:var(--display);font-size:30px;letter-spacing:.04em;text-align:center;padding:8px 14px 6px;border:0;margin:0 12px 0 0;border-radius:12px}
+  html.vertical body.look-bar #next{grid-area:2/2/3/4;justify-self:start;background:rgba(11,30,46,.92);padding:8px 22px 6px;border-radius:14px;border:0;margin:0;max-width:none;white-space:nowrap}
+  html.vertical body.look-bar #next .t{display:inline;font-size:inherit;font-family:var(--display);font-weight:400}
+  #nowSub{font-family:var(--body);font-weight:900;font-size:24px;color:#BDEFEC;letter-spacing:.02em}
+  #next{font-size:40px}
+  #next .t{color:var(--sun)}
+  .swap{animation:flip .6s ease}
+  @keyframes flip{0%{transform:rotateX(90deg);opacity:0}100%{transform:rotateX(0);opacity:1}}
+  .hidden{display:none!important}
+
+  /* ---------- COUNTDOWN (top left; weather and CTPG banner use the top right) ---------- */
+  #cd{position:absolute;left:44px;top:40px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+    transform:translateY(-160%);transition:transform .8s cubic-bezier(.2,1.3,.4,1)}
+  #cd.show{transform:translateY(0)}
+  #cd:not(.show){visibility:hidden;transition:transform .8s cubic-bezier(.2,1.3,.4,1),visibility 0s .8s}
+  #cdLabel{font-family:var(--display);font-size:32px;color:var(--white);background:var(--violet);
+    padding:8px 18px 6px;border-radius:14px;border:4px solid var(--white);-webkit-text-stroke:1px #2a0d5e;paint-order:stroke fill;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);max-width:760px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #cdTime{font-family:var(--display);font-size:96px;line-height:1;color:var(--white);
+    background:linear-gradient(135deg,var(--pink),var(--violet));padding:10px 28px 4px;border-radius:22px;border:5px solid var(--teal);
+    -webkit-text-stroke:3px #2a0d5e;paint-order:stroke fill;font-variant-numeric:tabular-nums;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  #cdTime small{font-size:40px;margin-left:6px}
+  #cd.final #cdTime{animation:beat 1s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  #cd.live #cdTime{background:linear-gradient(135deg,#FF8A00,var(--pink));font-size:72px;padding:14px 28px 8px}
+
+  #sparkles{position:absolute;inset:0;pointer-events:none}
+
+  /* ---------- VERTICAL CANVAS (1080x1920): overlay.html?layout=vertical ---------- */
+  html.vertical,html.vertical body{width:1080px;height:1920px}
+  html.vertical #card{left:36px;right:36px;bottom:80px;min-width:0;max-width:none}
+  html.vertical #now{font-size:62px}
+  html.vertical #next{font-size:42px}
+  html.vertical #cd{left:36px;right:auto;top:100px;align-items:flex-start}   /* top left; the vertical weather sits top right (x 669-1044) */
+  html.vertical #cdLabel{max-width:600px;font-size:36px}
+  html.vertical #cdTime{font-size:110px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}#card{transform:none}}
+</style>
+</head>
+<body>
+  <div id="card">
+    <div id="icon"></div>
+    <div class="chip now"><span class="dot"></span>NOW</div>
+    <div id="nowBlock"><div id="nowLabel" class="hidden"></div><div class="val" id="now">Live at the parks</div><div id="nowSub"></div></div>
+    <div id="wait" class="hidden"><b></b><small>MIN WAIT</small></div>
+    <div class="chip next" id="nextChip">NEXT</div>
+    <div class="val" id="next"></div>
+  </div>
+
+  <div id="cd">
+    <div id="cdLabel"></div>
+    <div id="cdTime">--:--</div>
+  </div>
+  <canvas id="sparkles" width="1920" height="1080"></canvas>
+
+<script>
+/*
+  URL options (add after overlay.html?):
+    now=Riding            text for the NOW line (required per scene)
+    sub=Space Mountain    optional small line under NOW
+    card=0                hide the Now/Next card (countdown only)
+    cd=0                  hide the countdown
+    within=180            show the countdown when a show is this many minutes away (default 180)
+    park=EPCOT            which park's live show times to use (default: park in plan.js)
+    party=1               include party-only shows (Halloween / Christmas party nights)
+    layout=vertical       1080x1920 layout for the Aitum Vertical canvas
+    demo=1                fake times for testing
+    planner=1             PLANNER MODE: one overlay in the live scene. NOW, park, NEXT and your picked
+                          shows come from the Park Day app (planner.cruiseandthemeparkguide.com).
+                          Needs planner_key.js next to this file. OBS listens for changes (no polling).
+    state=1               LIVE MODE: one overlay in the live scene. NOW comes from now_state.js,
+                          written by Streamer.bot when you tap a "Now:" button scene in Moblin.
+                          The park for NEXT comes from your stream title (Streamer.bot), then plan.js.
+  Your own stops come from plan.js. Parade and fireworks times come live from ThemeParks.wiki.
+*/
+const q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const VERTICAL = q.get('layout') === 'vertical';
+if (VERTICAL){ document.documentElement.classList.add('vertical'); document.getElementById('sparkles').width = 1080; document.getElementById('sparkles').height = 1920; }
+const STATE = q.get('state') === '1';
+const PLANNER = q.get('planner') === '1';
+const LOOK = ['ticket','bar','sign'].includes(q.get('look')) ? q.get('look') : '';
+if (LOOK) document.body.classList.add('look', 'look-' + LOOK);
+const ICONS = {
+  ride: '<path d="M2.5 15.5C4 15.5 5 6 9 6s4.2 9.5 7.5 9.5S20 11 21.5 11"/><path d="M5 12.5V20M9 6v14M13 11v9M17.5 14.5V20M20.5 11.5V20M2.5 20h19"/><circle cx="8.2" cy="5.8" r="1.2" fill="currentColor"/>',
+  line: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  eat: '<path d="M7 3v7a2 2 0 0 0 2 2v9M5 3v5M11 3v5M17 21V3c-2.5 1.5-3.5 5-3.5 9H17"/>',
+  fireworks: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
+  parade: '<path d="M4 21V4"/><path d="M4 4.5c3-1.5 5 1.5 8 0s5-1.5 8 0v8c-3-1.5-5 1.5-8 0s-5-1.5-8 0"/>',
+  concert: '<path d="M9 18V5.5l11-2.5v12.5"/><circle cx="6.5" cy="18" r="2.6"/><circle cx="17.5" cy="15.5" r="2.6"/>',
+  travel: '<rect x="4.5" y="3.5" width="15" height="14" rx="3"/><path d="M4.5 10.5h15M8 21l1.2-3.5M16 21l-1.2-3.5"/>',
+  monorail: '<rect x="5" y="3.5" width="14" height="13" rx="3.5"/><path d="M5 10.5h14M8.5 20.5l1.5-4M15.5 20.5l-1.5-4"/><circle cx="9" cy="13.5" r=".6"/><circle cx="15" cy="13.5" r=".6"/>',
+  skyliner: '<path d="M2 4.5l20-2"/><path d="M12 3.6V8"/><rect x="6" y="8" width="12" height="12" rx="3.5"/><path d="M6 13h12"/>',
+  boat: '<path d="M2.5 15.5h19l-2.5 4.5H5z"/><path d="M6 15.5V10h12v5.5M12 10V4.5"/><path d="M12 4.5l4.5 2.5L12 9"/>',
+  ferry: '<path d="M2.5 15h19l-2.5 5H5z"/><path d="M5 15v-4h14v4M8 11V7.5h8V11"/><path d="M10 7.5V5h4v2.5"/>',
+  bus: '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 10.5h16M7.5 21v-3M16.5 21v-3"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/>',
+  tram: '<rect x="2.5" y="7" width="19" height="9" rx="2.5"/><path d="M2.5 11.5h19M6.5 19.5l1-3.5M17.5 19.5l-1-3.5M9 7V4h6v3"/>',
+  walk: '<circle cx="13" cy="4" r="1.8"/><path d="M11 21l2-6-2.5-2.5L12 8l3 3 3 1M10.5 12.5L8 14l-1 3"/>',
+  taxi: '<path d="M2.5 15.5h19l-2.5 4.5H5z"/><path d="M6 15.5l2-5h8l2 5M9 10.5V8h6v2.5"/>',
+  shuttle: '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 10.5h16M7.5 21v-3M16.5 21v-3"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/>',
+  rideshare: '<path d="M4 16v-4l2.5-5h11l2.5 5v4z"/><path d="M4 12h16"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/>',
+  car: '<path d="M4 16v-4l2.5-5h11l2.5 5v4z"/><path d="M4 12h16"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/>',
+  show: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
+  meet: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
+  shop: '<path d="M5 8h14l-1.2 12.5H6.2z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/>',
+  explore: '<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>',
+  hop: '<rect x="5" y="3.5" width="14" height="13" rx="3.5"/><path d="M5 10.5h14M8.5 20.5l1.5-4M15.5 20.5l-1.5-4"/><circle cx="9" cy="13.5" r=".6"/><circle cx="15" cy="13.5" r=".6"/>',
+  none: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>'
+};
+function setLook(parts){
+  if (!LOOK) return;
+  const cat = parts && ICONS[parts.cat] ? parts.cat : 'none';
+  const icon = parts && parts.mode && ICONS[parts.mode] ? parts.mode : cat;   // travel: bus / boat / skyliner icon
+  $('card').className = $('card').className.replace(/\bcat-\S+/g, '').trim() + ' cat-' + cat;
+  $('icon').innerHTML = `<svg viewBox="0 0 24 24">${ICONS[icon]}</svg>`;
+  const w = parts && Number(parts.wait) > 0 ? Number(parts.wait) : 0;
+  $('wait').classList.toggle('hidden', !w); $('wait').querySelector('b').textContent = w || '';
+}
+let plannerItems = [], plannerTz = null, plannerNextNoTime = '', plannerParts = null;
+// Big NOW title: shrink to fit, then allow a second line. Never cut off with "...".
+function fitNow(){
+  const el = $('now');
+  el.classList.remove('two'); el.style.fontSize = ''; el.style.width = '';
+  const base = parseFloat(getComputedStyle(el).fontSize); let f = base;
+  const over = () => el.scrollWidth > el.clientWidth + 1;
+  while (over() && f > base * 0.86){ f -= 2; el.style.fontSize = f + 'px'; }   // nearly fits: shrink a little
+  if (over()){                                                                // too long: two even lines
+    el.classList.add('two'); f = Math.round(base * 0.9); el.style.fontSize = f + 'px';
+    const lines = () => { const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].map(x => Math.round(x.top))).size; };
+    while (lines() > 2 && f > base * 0.6){ f -= 2; el.style.fontSize = f + 'px'; }
+    const r = document.createRange(); r.selectNodeContents(el);
+    const w = Math.max(...[...r.getClientRects()].map(x => x.width));
+    if (w > 0) el.style.width = Math.ceil(w) + 6 + 'px';                      // card hugs the lines
+  }
+}
+if (document.fonts){ document.fonts.ready.then(fitNow); document.fonts.addEventListener('loadingdone', fitNow); }
+setTimeout(fitNow, 1500); setTimeout(fitNow, 4000);   // re-fit once the real font has arrived
+let NOW_TEXT = q.get('now') || 'Live at the parks';
+let statePark = '', stateSeen = '';
+const STALE_MS = 12 * 3600 * 1000; // ignore a NOW older than 8 hours (yesterday's stream)
+const SHOW_CARD = q.get('card') !== '0';
+let SHOW_CD = q.get('cd') !== '0';
+let WITHIN = Number(q.get('within') || 180) * 60;
+// Controls from the app's "On stream" card (planner mode). Link settings cd= / within= still win if set.
+let NEXT_ON = true, ON_LIVE = false;
+const SCENE_LIVE = q.get('scene') === 'live';   // this copy sits in the live scene: hidden unless "Also show on live" is on
+// Which scene is on air. The live copy also shows inside banner / live clone / subs / nick scenes (they nest live),
+// so it keeps the card up during a banner when you were on Now. It hides inside Now itself (Now has its own card).
+// Scene-change events always arrive; the first read needs page permission "Read access to user information".
+let PROGRAM = '', HOME = '';
+try { HOME = localStorage.getItem('ctpgHome') || ''; } catch (e) {}
+function setProgram(name){
+  PROGRAM = String(name || '');
+  if (/^now( vertical)?$/i.test(PROGRAM)) HOME = 'Now'; else if (/^live( vertical)?$/i.test(PROGRAM)) HOME = 'live';
+  try { localStorage.setItem('ctpgHome', HOME); } catch (e) {}
+  try { console.log('[ctpg-live-copy] program=' + PROGRAM + ' home=' + HOME + ' showCard=' + liveCopyVisible()); } catch (e) {}   // shows in the OBS log
+  if (typeof tick === 'function') tick();
+}
+function liveCopyVisible(){
+  if (/^now( vertical)?$/i.test(PROGRAM)) return false;              // Now shows its own card
+  if (!PROGRAM || /^live( vertical)?$/i.test(PROGRAM)) return ON_LIVE; // plain live: your "Also show on live" switch
+  return false;                                                       // any other scene (banners, subs, nick, low-data...): the card stays in Now only
+}
+if (SCENE_LIVE && window.obsstudio){
+  window.addEventListener('obsSceneChanged', e => setProgram(e.detail && e.detail.name));
+  try { window.obsstudio.getCurrentScene(sc => setProgram(sc && sc.name)); } catch (e) {}
+}
+const LIVE_FOR = 30 * 60; // "happening now" lasts 30 minutes (same as how long a late stop stays NEXT in the app)
+
+$('now').textContent = NOW_TEXT;
+if (!SHOW_CARD) $('card').classList.add('hidden');
+
+// LIVE MODE: read now_state.js every second (Streamer.bot rewrites it on each button tap)
+function loadState(){
+  const s = document.createElement('script');
+  s.src = 'now_state.js?t=' + Date.now();
+  s.onload = () => { s.remove(); applyState(window.CTPG_NOW || {}); };
+  s.onerror = () => s.remove();
+  document.head.appendChild(s);
+}
+function applyState(st){
+  const fresh = st.since && (Date.now() - Number(st.since)) < STALE_MS;
+  const nowText = fresh ? String(st.now || '').trim() : '';
+  const park = String(st.park || '').trim();
+  if (park !== statePark){ statePark = park; loadShows(); }
+  const key = nowText + '|' + statePark;
+  if (key === stateSeen) return;
+  stateSeen = key; NOW_TEXT = nowText;
+  $('now').innerHTML = escapeHtml(nowText).split(/(\S*-\S*)/).map(x => /-/.test(x) ? `<span style="white-space:nowrap">${x}</span>` : x).join('');   // keep hyphenated words together
+  $('now').classList.remove('swap'); void $('now').offsetWidth; $('now').classList.add('swap');
+  document.querySelector('.chip.now').classList.toggle('hidden', !nowText);
+  $('now').classList.toggle('hidden', !nowText);
+  $('card').classList.toggle('nonow', !nowText);   // no Now picked: only the NEXT row shows (no empty ticket)
+  tick();
+  fitNow();
+}
+
+let plan = window.CTPG_PLAN || null;
+
+// PLANNER MODE: live connection to the Park Day app. One request to connect, then updates are pushed.
+const pl = { ws: null, retry: 2000 };
+const plCfg = () => window.CTPG_PLANNER || null;
+const plLog = { ws: 'starting', fetch: '-', msg: '-' };
+const plDebug = m => {
+  if (!q.get('debug')) return;
+  document.title = 'PL:' + m;
+  if (q.get('debug') !== 'show') return;
+  let el = document.getElementById('dbg');
+  if (!el){ el = document.createElement('div'); el.id = 'dbg'; el.style.cssText = 'position:absolute;right:20px;bottom:20px;z-index:99;background:#000c;color:#0f0;font:20px monospace;padding:8px 12px;border-radius:8px;white-space:pre'; document.body.appendChild(el); }
+  el.textContent = `ws: ${plLog.ws}\nfetch: ${plLog.fetch}\nlast push: ${plLog.msg}\nonLive: ${typeof ON_LIVE === 'undefined' ? '?' : ON_LIVE}  scene=${q.get('scene') || '-'}  program=${typeof PROGRAM === 'undefined' ? '?' : PROGRAM || '-'}  home=${typeof HOME === 'undefined' ? '?' : HOME || '-'}`;
+};
+const hhmmss = () => new Date().toTimeString().slice(0, 8);
+async function plannerFetch(){
+  const c = plCfg(); if (!c) return plDebug('no key file');
+  try { const r = await fetch(c.url + '/api/state?key=' + encodeURIComponent(c.key), { cache: 'no-store' });
+        plLog.fetch = r.status + ' at ' + hhmmss(); if (r.ok) applyPlanner(await r.json()); plDebug('fetch ' + r.status); } catch (e) { plLog.fetch = 'error ' + e.message; plDebug('fetch error'); }
+}
+function plannerConnect(){
+  const c = plCfg(); if (!c) return;
+  let ws;
+  try { ws = new WebSocket(c.url.replace(/^http/, 'ws') + '/api/ws?key=' + encodeURIComponent(c.key)); } catch (e) { plLog.ws = 'could not start'; plDebug('ws'); return setTimeout(plannerConnect, pl.retry); }
+  pl.ws = ws; plLog.ws = 'connecting'; plDebug('ws');
+  ws.onopen = () => { pl.retry = 2000; plLog.ws = 'open at ' + hhmmss(); plDebug('ws open'); plannerFetch(); };
+  ws.onmessage = e => { if (e.data === 'pong') return; try { const m = JSON.parse(e.data); if (m.type === 'state'){ plLog.msg = hhmmss(); applyPlanner(m.state); plDebug('push'); } } catch (x) {} };
+  ws.onclose = ev => { pl.ws = null; plLog.ws = 'closed (' + ev.code + '), retry in ' + pl.retry / 1000 + 's'; plDebug('ws closed'); plannerFetch(); setTimeout(plannerConnect, pl.retry); pl.retry = Math.min(pl.retry * 2, 60000); };
+  ws.onerror = () => { try { ws.close(); } catch (x) {} };
+}
+function applyPlanner(st){
+  st = st || {};
+  const d = st.display || {};
+  const set = d.settings || {};
+  if (!q.has('cd')) SHOW_CD = set.countdown !== false;
+  if (!q.has('within')) WITHIN = (Number(set.within) || 180) * 60;
+  NEXT_ON = set.next !== false; ON_LIVE = !!set.onLive;
+  const fresh = st.updated && (Date.now() - Number(st.updated)) < STALE_MS;
+  plannerItems = []; plannerNextNoTime = '';
+  if (fresh){
+    if (d.next && d.next.label){ if (d.next.time) plannerItems.push({ time: d.next.time, label: d.next.label }); else plannerNextNoTime = d.next.label; }
+    (d.shows || []).forEach(x => { if (x && x.time && x.label) plannerItems.push({ time: x.time, label: x.label, show: true }); });
+    plannerTz = d.tz || null;
+  }
+  plannerParts = fresh ? (d.nowParts || (d.now ? { label: '', title: d.now, sub: d.park || '' } : null)) : null;
+  let lbl = plannerParts && plannerParts.label ? plannerParts.label : '';
+  if (LOOK && plannerParts && plannerParts.wait) lbl = lbl.replace(/\s*\u00b7.*$/, '');   // wait shows in its own badge
+  setLook(plannerParts);
+  $('nowLabel').textContent = lbl; $('nowLabel').classList.toggle('hidden', !lbl);
+  applyState({ since: fresh ? Date.now() : 0, now: plannerParts ? plannerParts.title : '', park: fresh ? d.park : '' });
+  tick();
+  fitNow();
+}
+
+// Reload plan.js every 30 s so edits show up without touching OBS.
+function loadPlan(){
+  const s = document.createElement('script');
+  s.src = 'plan.js?t=' + Date.now();
+  s.onload = () => { plan = window.CTPG_PLAN || plan; s.remove(); tick(); };
+  s.onerror = () => s.remove();
+  document.head.appendChild(s);
+}
+
+// Current wall-clock time in the plan's time zone, as seconds since local midnight.
+function secondsNow(tz){
+  const d = q.get('demo') ? new Date(Date.now() + demoOffset) : new Date();
+  const parts = new Intl.DateTimeFormat('en-US',{timeZone:tz||undefined,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(d);
+  const g = t => Number(parts.find(p => p.type === t).value);
+  return g('hour')*3600 + g('minute')*60 + g('second');
+}
+function toSec(hhmm){ const [h,m] = String(hhmm).split(':').map(Number); return h*3600 + (m||0)*60; }
+function fmtClock(hhmm){
+  let [h,m] = String(hhmm).split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  return h + ':' + String(m||0).padStart(2,'0') + ' ' + ap;
+}
+function fmtLeft(s){
+  s = Math.max(0, Math.round(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
+  if (h) return `${h}<small>h</small> ${m}<small>m</small>`;
+  if (m) return `${m}<small>m</small> ${String(sec).padStart(2,'0')}<small>s</small>`;
+  return `${sec}<small>s</small>`;
+}
+
+let lastNext = null, lastCd = '', burstDone = {};
+let demoOffset = 0;
+if (q.get('demo')) { // pretend it is 2 min 10 s before the first show in the plan
+  setTimeout(() => {
+    const show = (plan && plan.items || []).find(i => i.show);
+    if (show) demoOffset = (toSec(show.time) - 130 - secondsNow(plan.timezone)) * 1000;
+  }, 50);
+}
+
+// Live show times from ThemeParks.wiki (see parkdata.js). Refreshed every 5 minutes.
+let apiShows = [], apiTz = null;
+async function loadShows(){
+  if (PLANNER){ apiShows = []; return; }   // planner mode: only what Cierra picked in the app (no automatic park shows)
+  try {
+    const P = window.CTPG_PARKDATA; if (!P) return;
+    const park = q.get('park') || statePark || (PLANNER ? '' : (plan && plan.park));
+    const r = await P.fetchShows(park, { party: q.get('party') === '1' || !!(plan && plan.party), watch: plan && plan.watch, skip: plan && plan.skip, onlyWatch: !!(plan && plan.onlyWatch) });
+    if (r.ok){ apiShows = r.shows; apiTz = r.tz; }
+    tick();
+  } catch (e) { /* offline: keep the last good list */ }
+}
+
+function tick(){
+  if (PLANNER && SCENE_LIVE && !liveCopyVisible()){ $('card').classList.add('hidden'); $('cd').classList.remove('show'); return; }
+  const clean = list => (Array.isArray(list) ? list : []).filter(i => i && i.time && i.label);
+  const mine = PLANNER ? clean(plannerItems) : clean(plan && plan.items);
+  const items = mine.concat(apiShows).sort((a,b) => toSec(a.time) - toSec(b.time));
+  if (STATE || PLANNER) $('card').classList.toggle('hidden', !SHOW_CARD || (!NOW_TEXT && (!(NEXT_ON || !PLANNER) || (!items.length && !plannerNextNoTime))));
+  $('nowSub').textContent = PLANNER ? (plannerParts ? plannerParts.sub || '' : '') : (q.get('sub') || q.get('park') || statePark || (plan && plan.park) || '');
+  if (!items.length && !(PLANNER && plannerNextNoTime)) { $('next').textContent = ''; lastNext = ''; $('nextChip').classList.add('hidden'); $('cd').classList.remove('show'); return; }
+  const now = secondsNow((PLANNER && plannerTz) || (plan && plan.timezone) || apiTz);
+
+  // NEXT = your next plan stop; if your plan is empty or finished, the next big show from the park
+  const at = x => { let v = toSec(x); if (v < 4 * 3600 && now > 18 * 3600) v += 86400; return v; };   // 12-4 AM counts as tonight
+  const late = i => (PLANNER && !i.show ? 1800 : 0);   // a planned stop stays NEXT up to 30 min late (same as the app)
+  const ahead = list => list.filter(i => at(i.time) > now - late(i) && i.label.toLowerCase() !== String(NOW_TEXT).toLowerCase()).sort((a,b) => at(a.time) - at(b.time));
+  const nx = ahead(mine.slice().sort((a,b) => toSec(a.time) - toSec(b.time)))[0] || ahead(items)[0];
+  const untimed = !nx && PLANNER && plannerNextNoTime ? plannerNextNoTime : '';
+  const nextHtml = (PLANNER && !NEXT_ON) ? '' : nx ? `<span class="t">${fmtClock(nx.time)}</span> ${escapeHtml(nx.label)}` : (untimed ? escapeHtml(untimed) : '');
+  $('next').style.fontSize = (nx ? nx.label : untimed).length > 26 ? '34px' : '';
+  if (nextHtml !== lastNext){
+    $('next').innerHTML = nextHtml; $('next').classList.remove('swap'); void $('next').offsetWidth; $('next').classList.add('swap');
+    $('nextChip').classList.toggle('hidden', !nextHtml); lastNext = nextHtml;
+  }
+
+  // COUNTDOWN = next show within the window, or one that started under 15 min ago
+  const cd = $('cd');
+  if (!SHOW_CD || SCENE_LIVE){ cd.classList.remove('show'); return; }   // the top countdown only ever shows in the Now scene
+  const show = items.filter(i => i.show).sort((a,b) => at(a.time) - at(b.time)).find(i => at(i.time) + LIVE_FOR > now);
+  if (!show){ cd.classList.remove('show'); return; }
+  const left = at(show.time) - now;
+  if (left > WITHIN){ cd.classList.remove('show'); return; }
+  cd.classList.add('show');
+  $('cdLabel').textContent = left > 0 ? `${show.label} starts in` : `${show.label}`;
+  cd.classList.toggle('final', left > 0 && left <= 60);
+  cd.classList.toggle('live', left <= 0);
+  $('cdTime').innerHTML = left > 0 ? fmtLeft(left) : 'HAPPENING NOW';
+  if (left <= 0 && !burstDone[show.label + show.time]){ burstDone[show.label + show.time] = true; burst(); }
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// Sparkle burst when a show starts (lightweight canvas, about 3 seconds)
+function burst(){
+  const c = $('sparkles'), x = c.getContext('2d'); const cols = ['#FFC933','#FF4F9A','#1FB8B4','#FFFFFF','#7A3CF0'];
+  const r = $('cdTime').getBoundingClientRect(); const ox = r.left + r.width/2, oy = r.top + r.height/2;
+  const ps = Array.from({length:140}, () => { const a = Math.random()*Math.PI*2, v = 4 + Math.random()*10;
+    return {x:ox, y:oy, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3, s:3 + Math.random()*5, c:cols[Math.floor(Math.random()*cols.length)], life:1}; });
+  (function frame(){
+    x.clearRect(0,0,c.width,c.height); let alive = false;
+    for (const p of ps){ if (p.life <= 0) continue; alive = true;
+      p.x += p.vx; p.y += p.vy; p.vy += .25; p.vx *= .98; p.life -= .012;
+      x.globalAlpha = Math.max(0,p.life); x.fillStyle = p.c; x.save(); x.translate(p.x,p.y); x.rotate(p.life*6);
+      x.fillRect(-p.s/2,-p.s/2,p.s,p.s); x.restore(); }
+    if (alive) requestAnimationFrame(frame); else x.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+tick();
+setInterval(tick, 1000);
+setInterval(loadPlan, 30000);
+if (STATE){ applyState({}); loadState(); setInterval(loadState, 1000); }
+const MOCK = q.get('mock');
+if (q.get('previewbg')) document.body.style.background = `url(${q.get('previewbg')}) center/cover`;
+if (PLANNER && MOCK){ applyState({}); window.addEventListener('load', () => { try { applyPlanner({ updated: Date.now(), display: JSON.parse(MOCK) }); } catch (e) { document.title = 'bad mock ' + e.message; } }); }
+else if (PLANNER){ applyState({}); window.addEventListener('load', () => { plannerFetch(); plannerConnect(); });
+  setInterval(() => { if (!pl.ws || pl.ws.readyState !== 1) plannerFetch(); }, 60000);   // safety net while the live connection is down
+  setInterval(() => { if (pl.ws && pl.ws.readyState === 1) pl.ws.send('ping'); }, 30000); }
+</script>
+<script src="plan.js"></script>
+<script src="parkdata.js"></script>
+<script src="planner_key.js"></script>
+<script>plan = window.CTPG_PLAN || plan; tick(); loadShows(); setInterval(loadShows, 5 * 60 * 1000);</script>
+</body>
+</html>

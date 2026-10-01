@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CTPG Offline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@800;900&display=swap">
+<style>
+  /* Offline / signal dropped screen for Cruise & Theme Park Guide.
+     Mixes the "CTPG Signal Lost" look with the park photo from the old BRB videos.
+     URL options:
+       layout=vertical        1080x1920 (default 1920x1080)
+       style=window|card|tint design direction (default window = the chosen look)
+       bg=dca|monorail        background photo (default dca)
+       msg=Custom text        replaces the message line                          */
+  :root{
+    --teal:#1FB8B4; --teal-dark:#0E7F7C; --navy:#0B1E2E; --navy2:#12314A; --sun:#FFC933; --pink:#FF4F9A; --violet:#7A3CF0; --white:#FFFFFF; --mint:#BDEFEC;
+    --display:"Lilita One","Arial Black",Impact,sans-serif; --body:"Nunito","Segoe UI",Arial,sans-serif;
+    --W:1920px; --H:1080px;
+  }
+  html,body{margin:0;width:var(--W);height:var(--H);overflow:hidden}
+  body{background:var(--navy);color:var(--white);font-family:var(--body)}
+  html.v,body.v{--W:1080px;--H:1920px}
+  *{box-sizing:border-box}
+  .hidden{display:none!important}
+  canvas{position:absolute;inset:0}
+
+  /* photo layer */
+  .photo{position:absolute;inset:0;overflow:hidden}
+  .photo img{width:100%;height:100%;object-fit:cover;transform-origin:60% 40%;animation:drift 24s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:scale(1.02)}to{transform:scale(1.10)}}
+
+  .frame{position:absolute;inset:26px;border:8px solid var(--teal);border-radius:40px;box-shadow:0 0 0 4px rgba(255,255,255,.15) inset,0 0 40px rgba(31,184,180,.35);pointer-events:none;z-index:5}
+  .brand{position:absolute;left:90px;top:74px;font-family:var(--display);font-size:34px;letter-spacing:.03em;color:var(--mint);z-index:6;text-shadow:0 3px 0 rgba(0,0,0,.45)}
+  body.v .brand{left:0;right:0;top:80px;text-align:center;font-size:36px}
+
+  /* the signal stack (shared) */
+  .stack{display:flex;flex-direction:column;align-items:center;gap:30px;text-align:center}
+  .bars{display:flex;align-items:flex-end;gap:18px;height:150px}
+  .bars i{display:block;width:40px;border-radius:12px;background:var(--teal);animation:bar 1.8s ease-in-out infinite;box-shadow:0 6px 0 var(--teal-dark)}
+  .bars i:nth-child(1){height:45px}.bars i:nth-child(2){height:80px;animation-delay:.2s}.bars i:nth-child(3){height:115px;animation-delay:.4s}.bars i:nth-child(4){height:150px;animation-delay:.6s}
+  @keyframes bar{0%,100%{opacity:.25;transform:scaleY(.85)}40%{opacity:1;transform:scaleY(1);background:var(--sun)}}
+  .big{font-family:var(--display);line-height:.95;font-size:140px;-webkit-text-stroke:5px #06121c;paint-order:stroke fill;text-shadow:0 8px 0 rgba(0,0,0,.35)}
+  .big span{color:var(--sun)}
+  .msg{font-size:42px;font-weight:900;color:var(--mint);max-width:1150px;line-height:1.2;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+  .row{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;font-family:var(--display);font-size:36px}
+  .pill{padding:10px 26px 6px;border-radius:16px;border:4px solid var(--white)}
+  .pill.next{background:var(--sun);color:var(--navy);border-color:var(--navy)}
+  .pill.away{background:var(--violet);font-variant-numeric:tabular-nums}
+  .chat{font-size:32px;font-weight:800;color:var(--white);opacity:.92}
+  .chat b{color:var(--sun)}
+  body.v .big{font-size:150px}
+  body.v .msg{font-size:46px;max-width:860px}
+  body.v .row{flex-direction:column;align-items:center;font-size:40px}
+
+  /* ---- Direction A: card over the photo ---- */
+  .A .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,30,46,.15) 0%,rgba(11,30,46,.35) 45%,rgba(11,30,46,.85) 100%)}
+  .A .card{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);width:1320px;padding:54px 60px 50px;border-radius:36px;
+           background:rgba(11,30,46,.82);border:6px solid var(--teal);box-shadow:0 20px 60px rgba(0,0,0,.45);z-index:4}
+  body.v.A .card{top:auto;bottom:130px;transform:translateX(-50%);width:940px;padding:50px 40px}
+  body.v.A .frame{display:none}
+  body.v.A .photo{top:-280px;bottom:280px}
+  body.v .bars{height:120px;transform:scale(.85)}
+  body.v.A .big,body.v.C .big{font-size:130px}
+
+  /* ---- Direction B: Signal Lost screen with a photo window ---- */
+  .B{background:radial-gradient(120% 90% at 70% 10%,#1d4f6e 0%,var(--navy2) 40%,var(--navy) 100%)}
+  .B .photo{inset:auto;left:110px;top:170px;width:760px;height:760px;border-radius:36px;border:8px solid var(--white);box-shadow:0 18px 50px rgba(0,0,0,.5);transform:rotate(-2.5deg);z-index:3}
+  .B .card{position:absolute;left:930px;right:90px;top:50%;transform:translateY(-44%);z-index:4}
+  body.v.B .photo{left:130px;top:180px;width:820px;height:700px}
+  body.v.B .card{left:60px;right:60px;top:920px;bottom:100px;transform:none;display:flex;align-items:center;justify-content:center}
+  body.v.B .big{font-size:160px}
+  body.bg-dca:not(.v) .photo img{object-position:78% 45%}
+
+  /* ---- Direction C: tinted photo, signal stack centered ---- */
+  .C .photo img{filter:saturate(.9) brightness(.8)}
+  .C .photo::after{content:"";position:absolute;inset:0;background:radial-gradient(90% 80% at 50% 50%,rgba(11,30,46,.45) 0%,rgba(11,30,46,.82) 70%,rgba(11,30,46,.95) 100%)}
+  .C .card{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:4}
+  body.v.C .card{align-items:flex-end;padding-bottom:180px}
+
+  /* pause mode: a breathing pause icon instead of signal bars */
+  .pauseicon{display:flex;gap:26px;height:150px;align-items:center}
+  .pauseicon i{display:block;width:48px;height:140px;border-radius:14px;background:var(--teal);box-shadow:0 6px 0 var(--teal-dark);animation:breathe 2.4s ease-in-out infinite}
+  .pauseicon i:nth-child(2){animation-delay:.3s}
+  @keyframes breathe{0%,100%{opacity:.55;transform:scaleY(.9)}50%{opacity:1;transform:scaleY(1);background:var(--sun)}}
+  body.v .pauseicon{transform:scale(.85)}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="photo"><img id="bgimg" alt=""></div>
+<canvas id="fx"></canvas>
+<div class="frame"></div>
+<div class="brand">CRUISE &amp; THEME PARK GUIDE</div>
+<div class="card">
+  <div class="stack">
+    <div class="bars" id="bars"><i></i><i></i><i></i><i></i></div>
+    <div class="pauseicon hidden" id="pauseicon"><i></i><i></i></div>
+    <div class="big" id="head">Hang <span>Tight!</span></div>
+    <div class="msg" id="msg">The park signal dropped. We're reconnecting automatically, so don't go anywhere!</div>
+    <div class="row"><span class="pill away" id="away">Reconnecting&hellip;</span><span class="pill next hidden" id="next"></span></div>
+    <div class="chat" id="chat">While you wait, tell us in chat <b>where you're watching from!</b></div>
+  </div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const V = q.get('layout') === 'vertical';
+const STYLE = ({card:'A',window:'B',tint:'C'})[q.get('style') || 'window'] || 'B';
+document.body.classList.add(STYLE); if (V){ document.body.classList.add('v'); document.documentElement.classList.add('v'); }
+const PAUSE = q.get('mode') === 'pause';
+if (PAUSE){
+  $('bars').classList.add('hidden'); $('pauseicon').classList.remove('hidden');
+  $('head').innerHTML = 'Quick <span>Break!</span>';
+  $('msg').textContent = "We're taking a quick break. Stretch, grab a snack, and hang out. We'll be right back!";
+  $('chat').innerHTML = 'While you wait, tell us in chat <b>what you want to see next!</b>';
+  document.title = 'CTPG Pause';
+}
+const BG = (q.get('bg') || (PAUSE ? 'monorail' : 'dca')) === 'monorail' ? 'monorail' : 'dca';
+$('bgimg').src = `offline-${BG}-${V ? 'tall' : 'wide'}.jpg`; document.body.classList.add('bg-' + BG);
+if (q.get('msg')) $('msg').textContent = q.get('msg');
+const W = V ? 1080 : 1920, H = V ? 1920 : 1080;
+const cv = $('fx'); cv.width = W; cv.height = H; const cx = cv.getContext('2d');
+
+let plan = window.CTPG_PLAN || null;
+const opened = Date.now();
+const toSec = s => { const [h,m] = String(s).split(':').map(Number); return h*3600 + (m||0)*60; };
+const clock = s => { let [h,m] = String(s).split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h%12 || 12; return `${h}:${String(m||0).padStart(2,'0')} ${ap}`; };
+const mmss = s => { s = Math.max(0,Math.round(s)); const m = Math.floor(s/60), x = s%60; return m + ':' + String(x).padStart(2,'0'); };
+function secondsNow(tz){
+  const p = new Intl.DateTimeFormat('en-US',{timeZone:tz||undefined,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  const g = t => Number(p.find(x => x.type === t).value); return g('hour')*3600 + g('minute')*60 + g('second');
+}
+let apiShows = [], apiTz = null;
+async function loadShows(){
+  try { const P = window.CTPG_PARKDATA; if (!P || !plan) return;
+    const r = await P.fetchShows(plan.park, { party: !!plan.party, watch: plan.watch, skip: plan.skip, onlyWatch: !!plan.onlyWatch });
+    if (r.ok){ apiShows = r.shows; apiTz = r.tz; } } catch (e) {}
+}
+function render(){
+  const mine = plan && Array.isArray(plan.items) ? plan.items.filter(i => i && i.time && i.label) : [];
+  const items = mine.concat(apiShows).sort((a,b) => toSec(a.time) - toSec(b.time));
+  const now = secondsNow((plan && plan.timezone) || apiTz);
+  // NEXT line is off by default (Cierra, 2026-09-27). Add &next=1 to the URL to turn it back on.
+  const nx = q.get('next') === '1' ? items.find(i => toSec(i.time) > now) : null;
+  $('next').classList.toggle('hidden', !nx);
+  if (nx) $('next').textContent = `NEXT: ${nx.label} · ${clock(nx.time)}`;
+  const away = (Date.now() - opened)/1000;
+  const word = PAUSE ? 'On break' : 'Reconnecting';
+  $('away').textContent = away < 5 ? word + '…' : word + ' · ' + mmss(away);
+}
+function loadPlan(){ const s = document.createElement('script'); s.src = 'plan.js?t=' + Date.now();
+  s.onload = () => { plan = window.CTPG_PLAN || plan; s.remove(); render(); }; s.onerror = () => s.remove(); document.head.appendChild(s); }
+
+const stars = Array.from({length: STYLE === 'A' ? 40 : 80}, () => ({x:Math.random()*W, y:Math.random()*H, r:1+Math.random()*2.5, s:.15+Math.random()*.5, p:Math.random()*6.28}));
+function draw(t){ cx.clearRect(0,0,W,H);
+  for (const s of stars){ s.y -= s.s; if (s.y < -5){ s.y = H + 5; s.x = Math.random()*W; }
+    cx.globalAlpha = .3 + .3*Math.sin(t/700 + s.p); cx.fillStyle = '#FFFFFF'; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.28); cx.fill(); }
+  cx.globalAlpha = 1; requestAnimationFrame(draw); }
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(draw);
+render(); setInterval(render, 1000); setInterval(loadPlan, 30000);
+</script>
+<script src="plan.js"></script>
+<script src="parkdata.js"></script>
+<script>plan = window.CTPG_PLAN || plan; render(); loadShows(); setInterval(loadShows, 5 * 60 * 1000);</script>
+</body>
+</html>

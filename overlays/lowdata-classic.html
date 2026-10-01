@@ -1,0 +1,94 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+body{width:640px;height:640px;overflow:hidden;background:transparent}
+.cell{position:absolute;inset:0;overflow:hidden;perspective:1000px}
+.lab{position:absolute;left:14px;top:12px;z-index:9;font:700 17px Montserrat;color:#fff;background:rgba(0,0,0,.6);padding:5px 12px;border-radius:7px}
+.lab b{color:#ffb033;margin-right:6px}
+.wrap{position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;transform-style:preserve-3d;animation:spin 6s infinite}
+.sc{position:absolute;inset:0;transform:scale(1.35);transform-style:preserve-3d}
+@keyframes spin{
+ 0%{transform:rotateX(12deg) rotateY(-18deg);animation-timing-function:ease-in-out}
+ 29%{transform:rotateX(12deg) rotateY(18deg);animation-timing-function:ease-in-out}
+ 56%{transform:rotateX(12deg) rotateY(-18deg);animation-timing-function:cubic-bezier(.5,0,.25,1)}
+ 82%{transform:rotateX(12deg) rotateY(342deg);animation-timing-function:cubic-bezier(.3,1.4,.5,1)}
+ 92%{transform:rotateX(12deg) rotateY(340deg);animation-timing-function:ease-in-out}
+ 100%{transform:rotateX(12deg) rotateY(342deg)}}
+.layer{position:absolute;inset:0;border-radius:60px}
+.edge{background:linear-gradient(180deg,#d9731a,#8a3a00)}
+.edge.dk{background:linear-gradient(180deg,#a8530c,#5e2600)}
+.face{padding:9px;background:linear-gradient(150deg,#fff1cf 0%,#ffc15a 14%,#ff8a1a 36%,#c95600 55%,#ffab3d 74%,#ffd89a 88%,#e07010 100%);
+ box-shadow:0 22px 34px rgba(0,0,0,.5),0 6px 10px rgba(0,0,0,.4),inset 0 2px 1px rgba(255,255,255,.8),inset 0 -3px 2px rgba(120,40,0,.6);backface-visibility:hidden}
+.front{transform:translateZ(10px)}.back{transform:rotateY(180deg) translateZ(10px)}
+.in{position:relative;width:100%;height:100%;border-radius:52px;overflow:hidden;
+ background:radial-gradient(110% 85% at 28% 8%,#3a78ff 0%,#1f55e0 38%,#133cb4 70%,#0b2670 100%);
+ box-shadow:inset 0 3px 3px rgba(0,0,0,.55),inset 0 -2px 2px rgba(120,170,255,.35),inset 0 0 0 1.5px rgba(5,15,50,.7),inset 0 10px 22px rgba(0,0,0,.28)}
+.noise{position:absolute;inset:0;opacity:.2;mix-blend-mode:overlay;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 -.2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.gloss{position:absolute;left:-10%;right:-10%;top:-45%;height:80%;border-radius:0 0 50% 50%;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.02))}
+/* 3D stacks sit above the front face */
+.stack{position:absolute;left:9px;top:9px;width:282px;height:282px;transform-style:preserve-3d;pointer-events:none}
+.sl{position:absolute;inset:0}
+svg.w{position:absolute;left:0;top:4px;width:282px;height:190px;overflow:visible}
+.txt{position:absolute;left:0;right:0;top:186px;text-align:center}
+.h{font:700 38px Oswald;letter-spacing:.01em;line-height:1;white-space:nowrap}
+.k{margin-top:7px;font:800 19px Montserrat;letter-spacing:.05em;white-space:nowrap}
+.dim{fill:#0a2266}
+.f1{animation:f1 6s infinite}.f2{animation:f2 6s infinite}.f3{animation:f3 6s infinite}
+@keyframes f3{0%,6%{opacity:1}11%,48%{opacity:0}54%,100%{opacity:1}}
+@keyframes f2{0%,20%{opacity:1}24%,36%{opacity:0}41%,100%{opacity:1}}
+@keyframes f1{0%,100%{opacity:1}}
+.pulse{animation:pl 1.5s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pl{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+</style></head><body>
+<script>
+const cx=141;
+const sector=(cy,r1,r2,a)=>{const p=(r,s)=>[(cx+s*r*Math.sin(a)).toFixed(1),(cy-r*Math.cos(a)).toFixed(1)];const [ax,ay]=p(r2,-1),[bx,by]=p(r2,1),[cx2,cy2]=p(r1,1),[dx,dy]=p(r1,-1);
+ return `M${ax},${ay} A${r2},${r2} 0 0 1 ${bx},${by} L${cx2},${cy2} A${r1},${r1} 0 0 0 ${dx},${dy} Z`};
+const rr=(x,y,w,h,r)=>`M${x+r},${y} h${w-2*r} a${r},${r} 0 0 1 ${r},${r} v${h-2*r} a${r},${r} 0 0 1 ${-r},${r} h${-(w-2*r)} a${r},${r} 0 0 1 ${-r},${-r} v${-(h-2*r)} a${r},${r} 0 0 1 ${r},${-r} Z`;
+const arcP=(x0,y0,r,a0,a1)=>{const P=a=>[(x0+r*Math.sin(a)).toFixed(1),(y0-r*Math.cos(a)).toFixed(1)];const [sx,sy]=P(a0),[ex,ey]=P(a1);return `M${sx},${sy} A${r},${r} 0 0 ${a1>a0?1:0} ${ex},${ey}`};
+// each icon: list of [shapeSVG(fillAttr), animClass, isDot]
+const ICONS={
+E:()=>{const cy=150,a=Math.PI/4,st=`stroke-linejoin="round" stroke-width="5"`;const sw=f=>f.replace(/fill="([^"]+)"/,'fill="$1" stroke="$1"')+' '+st;return [
+ [f=>`<path d="${sector(cy,114,139,a)}" ${sw(f)}/>`,'f3'],
+ [f=>`<path d="${sector(cy,74,99,a)}" ${sw(f)}/>`,'f2'],
+ [f=>`<path d="${sector(cy,34,59,a)}" ${sw(f)}/>`,'f1'],
+ [f=>`<circle cx="141" cy="${cy}" r="18" ${f}/>`,'f1',1]]},
+A:()=>{const cy=170,a=.78;return [
+ [f=>`<path d="${sector(cy,104,136,a)}" ${f} stroke-linejoin="round"/>`,'f3'],
+ [f=>`<path d="${sector(cy,62,92,a)}" ${f}/>`,'f2'],
+ [f=>`<path d="${sector(cy,0,50,a)}" ${f}/>`,'f1',1]]},
+B:()=>[[0,1,2,3].map(i=>[f=>`<path d="${rr(62+i*42,150-(i+1)*30,32,(i+1)*30+14,9)}" ${f}/>`,['f1','f2','f3','f3'][i],i==0])].flat(),
+C:()=>{const x0=141,y0=92;return [
+ [f=>`<path d="${arcP(x0,y0,74,-2.35,-.8)}" ${f}/>`,'f3','arc'],[f=>`<path d="${arcP(x0,y0,74,.8,2.35)}" ${f}/>`,'f3','arc'],
+ [f=>`<path d="${arcP(x0,y0,46,-2.3,-.85)}" ${f}/>`,'f2','arc'],[f=>`<path d="${arcP(x0,y0,46,.85,2.3)}" ${f}/>`,'f2','arc'],
+ [f=>`<path d="M126,108 L156,108 L170,178 Q170,184 164,184 L118,184 Q112,184 112,178 Z" ${f}/>`,'f1'],
+ [f=>`<circle cx="141" cy="92" r="20" ${f}/>`,'f1',1]]},
+D:()=>{const cy=150;const arc=(r,a)=>`M${(cx-r*Math.sin(a)).toFixed(1)},${(cy-r*Math.cos(a)).toFixed(1)} A${r},${r} 0 0 1 ${(cx+r*Math.sin(a)).toFixed(1)},${(cy-r*Math.cos(a)).toFixed(1)}`;
+ return [[f=>`<path d="${arc(112,.82)}" ${f}/>`,'f3','arc'],[f=>`<path d="${arc(76,.9)}" ${f}/>`,'f2','arc'],[f=>`<path d="${arc(40,1)}" ${f}/>`,'f1','arc'],
+ [f=>`<circle cx="141" cy="150" r="15" ${f}/>`,'f1',1],
+ [f=>`<path d="M222,112 L252,166 Q255,172 248,172 L196,172 Q189,172 192,166 Z" ${f} stroke-linejoin="round"/>`,'f1','warn']]}
+};
+const N=10; // extrusion layers
+const sideCol=(k,dot)=>{const t=k/(N-1);const c=dot?[140+80*t,60+60*t,0+10*t]:[95+110*t,120+100*t,184+60*t];return `rgb(${c.map(Math.round)})`};
+let UID=0;function iconSVG(parts,layer,top){const u='u'+(UID++); // layer index 0..N-1 (0 bottom)
+ return `<svg class="w" viewBox="0 0 282 190"><defs>
+ <linearGradient id="wt${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#f2f5fc"/><stop offset="1" stop-color="#d8e1f3"/></linearGradient>
+ <radialGradient id="ot${u}" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#fff0cc"/><stop offset=".3" stop-color="#ffb640"/><stop offset=".75" stop-color="#ff7a0a"/><stop offset="1" stop-color="#c25200"/></radialGradient>
+ <filter id="bb${u}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter></defs>`+
+ parts.map(([fn,cls,kind])=>{const isArc=kind==='arc',orange=kind===1||kind==='warn';
+  const attr=(fill)=>isArc?`fill="none" stroke="${fill}" stroke-width="22" stroke-linecap="round"`:`fill="${fill}"`;
+  if(layer===-1) return fn(isArc?`fill="none" stroke="#0a2266" stroke-width="22" stroke-linecap="round"`:`fill="#0a2266"`); // groove on face
+  if(layer===-2) return `<g class="${cls}" filter="url(#bb${u})" transform="translate(4,10)">${fn(attr('rgba(0,0,0,.6)'))}</g>`;
+  const fill=top?(orange?`url(#ot${u})`:`url(#wt${u})`):sideCol(layer,orange);
+  return `<g class="${cls}">${fn(attr(fill))}${top&&kind==='warn'?`<text x="222" y="165" text-anchor="middle" font-family="Montserrat" font-weight="900" font-size="36" fill="#6b2400">!</text>`:''}</g>`}).join('')+`</svg>`}
+const txtL=(k,top)=>{const s=k/(N-1);const blue=`rgb(${Math.round(60+140*s)},${Math.round(90+120*s)},${Math.round(170+70*s)})`,org=`rgb(${Math.round(150+90*s)},${Math.round(60+60*s)},0)`;
+ return `<div class="txt"><div class="h" style="color:${top?'#fff':blue}">LOW DATA MODE</div><div class="k" style="color:${top?'#ffb033':org}">HANG TIGHT</div></div>`};
+const cell=(k,name)=>{const parts=ICONS[k]();
+ let st=`<div class="sl" style="transform:translateZ(0.5px)">${iconSVG(parts,-2)}<div class="txt" style="filter:blur(4px);transform:translate(3px,8px);opacity:.65"><div class="h" style="color:#000">LOW DATA MODE</div><div class="k" style="color:#000">HANG TIGHT</div></div></div>`;
+ for(let i=0;i<N;i++){const top=i==N-1;st+=`<div class="sl" style="transform:translateZ(${1+i*1.1}px)">${iconSVG(parts,i,top)}${txtL(i,top)}</div>`}
+ const front=`<div class="layer face front"><div class="in"><div class="noise"></div><div class="gloss"></div>${iconSVG(parts,-1)}</div></div>`;
+ const back=`<div class="layer face back"><div class="in"><div class="noise"></div><div class="gloss"></div>${iconSVG(parts,N-1,true)}${txtL(0,true)}</div></div>`;
+ const edges=[...Array(19)].map((_,i)=>`<div class="layer edge ${i>2&&i<16?'dk':''}" style="transform:translateZ(${9-i}px)"></div>`).join('');
+ return `<div class="cell"><div class="lab"><b>${k}</b>${name}</div><div class="wrap"><div class="sc">${edges}${back}${front}<div class="stack" style="transform:translateZ(10px)">${st}</div></div></div></div>`};
+document.write(cell('E','Classic Wi-Fi'));document.querySelector('.lab').remove();
+window.seek=t=>document.getAnimations().forEach(x=>{x.pause();x.currentTime=t});
+</script></body></html>

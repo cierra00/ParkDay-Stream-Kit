@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CTPG Screens</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@800;900&display=swap">
+<style>
+  /* Full-screen scenes for Cruise & Theme Park Guide. 1920x1080.
+     screens.html?screen=starting   Starting Soon (shows today's plan from plan.js)
+     screens.html?screen=signal     Signal Lost / Be Right Back                       */
+  :root{
+    --teal:#1FB8B4; --teal-dark:#0E7F7C; --navy:#0B1E2E; --navy2:#12314A; --sun:#FFC933; --pink:#FF4F9A; --violet:#7A3CF0; --white:#FFFFFF;
+    --display:"Lilita One","Arial Black",Impact,sans-serif; --body:"Nunito","Segoe UI",Arial,sans-serif;
+  }
+  html,body{margin:0;width:1920px;height:1080px;overflow:hidden}
+  body{background:radial-gradient(120% 90% at 70% 10%,#1d4f6e 0%,var(--navy2) 40%,var(--navy) 100%);color:var(--white);font-family:var(--body)}
+  *{box-sizing:border-box}
+  canvas{position:absolute;inset:0}
+  .frame{position:absolute;inset:26px;border:8px solid var(--teal);border-radius:40px;box-shadow:0 0 0 4px rgba(255,255,255,.15) inset,0 0 40px rgba(31,184,180,.35)}
+  .brand{position:absolute;left:90px;top:74px;font-family:var(--display);font-size:34px;letter-spacing:.03em;color:#BDEFEC;display:flex;gap:14px;align-items:center}
+  .brand .pip{width:18px;height:18px;border-radius:50%;background:var(--sun);box-shadow:0 0 16px var(--sun)}
+  .big{font-family:var(--display);line-height:.95;-webkit-text-stroke:5px #06121c;paint-order:stroke fill;text-shadow:0 8px 0 rgba(0,0,0,.35)}
+  .hidden{display:none!important}
+
+  /* ----- Starting Soon ----- */
+  #starting .title{position:absolute;left:90px;top:170px;font-size:190px;color:var(--white)}
+  #starting .title span{color:var(--sun);display:block}
+  #starting .park{position:absolute;left:96px;top:560px;font-family:var(--display);font-size:56px;color:var(--white);
+    background:var(--violet);padding:10px 28px 6px;border-radius:18px;border:5px solid var(--white);-webkit-text-stroke:2px #2a0d5e;paint-order:stroke fill}
+  #startIn{position:absolute;left:96px;top:690px;font-family:var(--display);font-size:44px;color:#BDEFEC}
+  #startIn b{color:var(--white);font-size:84px;display:block;-webkit-text-stroke:3px #06121c;paint-order:stroke fill;font-variant-numeric:tabular-nums}
+  #plan{position:absolute;right:96px;top:150px;width:760px;background:rgba(11,30,46,.78);border:5px solid var(--teal);border-radius:30px;padding:30px 34px}
+  #plan h2{margin:0 0 18px;font-family:var(--display);font-weight:400;font-size:52px;color:var(--sun);-webkit-text-stroke:2px #06121c;paint-order:stroke fill}
+  #plan ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+  #plan li{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:16px;font-size:34px;font-weight:900;
+    opacity:0;transform:translateX(40px);animation:in .6s ease forwards}
+  #plan li .tm{font-family:var(--display);font-weight:400;font-size:30px;background:var(--teal);border-radius:12px;padding:6px 10px 3px;text-align:center;color:var(--white)}
+  #plan li.show .tm{background:linear-gradient(135deg,var(--pink),var(--violet))}
+  #plan li .lb{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @keyframes in{to{opacity:1;transform:none}}
+
+  /* ----- Signal Lost ----- */
+  #signal{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;text-align:center}
+  .bars{display:flex;align-items:flex-end;gap:18px;height:170px}
+  .bars i{display:block;width:44px;border-radius:12px;background:var(--teal);animation:bar 1.8s ease-in-out infinite;box-shadow:0 6px 0 var(--teal-dark)}
+  .bars i:nth-child(1){height:50px;animation-delay:0s}
+  .bars i:nth-child(2){height:90px;animation-delay:.2s}
+  .bars i:nth-child(3){height:130px;animation-delay:.4s}
+  .bars i:nth-child(4){height:170px;animation-delay:.6s}
+  @keyframes bar{0%,100%{opacity:.25;transform:scaleY(.85)}40%{opacity:1;transform:scaleY(1);background:var(--sun)}}
+  #signal .big{font-size:150px}
+  #signal .big span{color:var(--sun)}
+  #signal .msg{font-size:46px;font-weight:900;color:#BDEFEC;max-width:1300px}
+  #signal .row{display:flex;gap:24px;align-items:center;font-family:var(--display);font-size:40px}
+  .pill{padding:10px 26px 6px;border-radius:16px;border:4px solid var(--white)}
+  .pill.next{background:var(--sun);color:var(--navy);border-color:var(--navy)}
+  .pill.away{background:var(--violet);-webkit-text-stroke:1px #2a0d5e;paint-order:stroke fill;font-variant-numeric:tabular-nums}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}#plan li{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="fx" width="1920" height="1080"></canvas>
+<div class="frame"></div>
+<div class="brand"><span class="pip"></span>CRUISE &amp; THEME PARK GUIDE</div>
+
+<section id="starting" class="hidden">
+  <div class="title big">Starting<span>Soon!</span></div>
+  <div class="park" id="park">Live from the parks</div>
+  <div id="startIn" class="hidden">We go live in<b id="startClock">--:--</b></div>
+  <div id="plan"><h2>Today's Plan</h2><ol id="planList"></ol></div>
+</section>
+
+<section id="signal" class="hidden">
+  <div class="bars"><i></i><i></i><i></i><i></i></div>
+  <div class="big">Hang <span>Tight!</span></div>
+  <div class="msg" id="sigMsg">The park signal dipped. We'll be right back, don't go anywhere!</div>
+  <div class="row"><span class="pill next hidden" id="sigNext"></span><span class="pill away" id="away">Back in a moment</span></div>
+</section>
+
+<script>
+/* URL options:
+     screen=starting | signal
+     start=08:30        (starting) optional stream start time, shows a countdown
+     msg=Custom text    (signal) replaces the message line               */
+const q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const SCREEN = q.get('screen') === 'signal' ? 'signal' : 'starting';
+$(SCREEN).classList.remove('hidden');
+if (q.get('msg')) $('sigMsg').textContent = q.get('msg');
+let plan = window.CTPG_PLAN || null;
+const opened = Date.now();
+
+function secondsNow(tz){
+  const parts = new Intl.DateTimeFormat('en-US',{timeZone:tz||undefined,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  const g = t => Number(parts.find(p => p.type === t).value); return g('hour')*3600 + g('minute')*60 + g('second');
+}
+const toSec = s => { const [h,m] = String(s).split(':').map(Number); return h*3600 + (m||0)*60; };
+const clock = s => { let [h,m] = String(s).split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h%12 || 12; return `${h}:${String(m||0).padStart(2,'0')} ${ap}`; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mmss = s => { s = Math.max(0,Math.round(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h+':'+String(m).padStart(2,'0') : m) + ':' + String(x).padStart(2,'0'); };
+
+let apiShows = [], apiTz = null;
+async function loadShows(){
+  try {
+    const P = window.CTPG_PARKDATA; if (!P) return;
+    const r = await P.fetchShows(q.get('park') || (plan && plan.park), { party: q.get('party') === '1' || !!(plan && plan.party), watch: plan && plan.watch, skip: plan && plan.skip, onlyWatch: !!(plan && plan.onlyWatch) });
+    if (r.ok){ apiShows = r.shows; apiTz = r.tz; }
+    render();
+  } catch (e) {}
+}
+
+let lastPlan = '';
+function render(){
+  const mine = plan && Array.isArray(plan.items) ? plan.items.filter(i => i && i.time && i.label) : [];
+  const items = mine.concat(apiShows).sort((a,b) => toSec(a.time) - toSec(b.time));
+  const now = secondsNow((plan && plan.timezone) || apiTz);
+  if (SCREEN === 'starting'){
+    const parkName = q.get('park') || (plan && plan.park);
+    if (parkName) $('park').textContent = 'Live from ' + parkName;
+    const list = items.filter(i => toSec(i.time) >= now - 1800).slice(0,6);
+    const html = list.map((i,n) => `<li class="${i.show ? 'show' : ''}" style="animation-delay:${.5 + n*.15}s"><span class="tm">${clock(i.time)}</span><span class="lb">${esc(i.label)}</span></li>`).join('');
+    if (html !== lastPlan){ $('planList').innerHTML = html; lastPlan = html; }
+    $('plan').classList.toggle('hidden', !list.length);
+    const start = q.get('start') || (plan && plan.startTime);
+    if (start){ const left = toSec(start) - now; $('startIn').classList.toggle('hidden', left <= 0); $('startClock').textContent = mmss(left); }
+  } else {
+    const nx = mine.slice().sort((a,b) => toSec(a.time) - toSec(b.time)).find(i => toSec(i.time) > now) || items.find(i => toSec(i.time) > now);
+    $('sigNext').classList.toggle('hidden', !nx);
+    if (nx) $('sigNext').textContent = `NEXT: ${nx.label} · ${clock(nx.time)}`;
+    const away = (Date.now() - opened)/1000;
+    $('away').textContent = away < 20 ? 'Back in a moment' : 'Reconnecting · ' + mmss(away);
+  }
+}
+function loadPlan(){
+  const s = document.createElement('script'); s.src = 'plan.js?t=' + Date.now();
+  s.onload = () => { plan = window.CTPG_PLAN || plan; s.remove(); render(); }; s.onerror = () => s.remove();
+  document.head.appendChild(s);
+}
+
+/* Background: slow drifting sparkles, with an occasional small firework on Starting Soon */
+const cv = $('fx'), cx = cv.getContext('2d'); const COLS = ['#FFC933','#FF4F9A','#1FB8B4','#FFFFFF','#7A3CF0'];
+const stars = Array.from({length:90}, () => ({x:Math.random()*1920, y:Math.random()*1080, r:1+Math.random()*2.5, s:.15+Math.random()*.5, p:Math.random()*6.28}));
+let bursts = [];
+function firework(){
+  const x = 1100 + Math.random()*700, y = 120 + Math.random()*260, c = COLS[Math.floor(Math.random()*COLS.length)];
+  bursts.push(...Array.from({length:60}, () => { const a = Math.random()*6.28, v = 2 + Math.random()*5; return {x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, life:1, c}; }));
+}
+function draw(t){
+  cx.clearRect(0,0,1920,1080);
+  for (const s of stars){ s.y -= s.s; if (s.y < -5){ s.y = 1085; s.x = Math.random()*1920; }
+    cx.globalAlpha = .35 + .35*Math.sin(t/700 + s.p); cx.fillStyle = '#FFFFFF'; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.28); cx.fill(); }
+  bursts = bursts.filter(p => p.life > 0);
+  for (const p of bursts){ p.x += p.vx; p.y += p.vy; p.vy += .05; p.vx *= .985; p.vy *= .985; p.life -= .011;
+    cx.globalAlpha = Math.max(0,p.life); cx.fillStyle = p.c; cx.beginPath(); cx.arc(p.x, p.y, 2.6, 0, 6.28); cx.fill(); }
+  cx.globalAlpha = 1; requestAnimationFrame(draw);
+}
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  requestAnimationFrame(draw);
+  if (SCREEN === 'starting'){ firework(); setInterval(firework, 2600); }
+}
+
+render(); setInterval(render, 1000); setInterval(loadPlan, 30000);
+</script>
+<script src="plan.js"></script>
+<script src="parkdata.js"></script>
+<script>plan = window.CTPG_PLAN || plan; render(); loadShows(); setInterval(loadShows, 5 * 60 * 1000);</script>
+</body>
+</html>

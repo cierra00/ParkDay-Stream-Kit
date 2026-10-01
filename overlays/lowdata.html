@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Low Data Mode</title>
+<!-- Low Data Mode tile (classic Wi-Fi, blue + orange, 3D spin). Plays low-data-classic.webm (transparent, 6 s loop).
+     OBS browser source 1920x1080, or 1080x1920 with ?layout=vertical.
+     Link settings: ?layout=vertical  ?pos=top  ?size=1.2  ?previewbg=image.jpg (testing only)
+     Source design: lowdata-classic.html. Previous card: lowdata.html.bak-card-* -->
+<style>
+ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent}
+ html.vertical,html.vertical body{width:1080px;height:1920px}
+ body{background-size:cover;background-position:center}
+ #tile{position:absolute;left:0;bottom:0;width:calc(320px * var(--size,1));height:auto}
+ html.pos-top #tile{bottom:auto;top:0}
+ html.vertical #tile{left:0;bottom:210px;width:calc(400px * var(--size,1))}
+</style></head><body>
+<video id="tile" src="low-data-classic.webm" autoplay loop muted playsinline></video>
+<script>
+ const q=new URLSearchParams(location.search);
+ if(q.get('layout')==='vertical')document.documentElement.classList.add('vertical');
+ if(q.get('pos')==='top')document.documentElement.classList.add('pos-top');
+ if(q.get('size'))document.documentElement.style.setProperty('--size',q.get('size'));
+ if(q.get('previewbg'))document.body.style.backgroundImage=`url(${q.get('previewbg')})`;
+ const v=document.getElementById('tile'); v.addEventListener('ended',()=>{v.currentTime=0;v.play()});
+</script></body></html>

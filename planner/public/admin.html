@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Park Day Owner Dashboard</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/icon-192.png">
+<style>
+:root{color-scheme:dark;--bg:#0B1E2E;--bg2:#12314A;--card:#143651;--card2:#19405F;--line:#24506f;--ink:#F3FAFB;--muted:#9FC4CF;--teal:#1FB8B4;--sun:#FFC933;--pink:#FF4F9A;--ok:#5BE39A;
+ --body:"Nunito","Segoe UI",system-ui,sans-serif;--display:"Lilita One","Arial Black",Impact,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 60% at 50% 0,#12314A,#0B1E2E);color:var(--ink);font:600 15px var(--body);min-height:100vh}
+main{max-width:640px;margin:0 auto;padding:18px 16px 60px}
+h1{font:400 30px var(--display);margin:4px 0 2px}h1 span{color:var(--sun)}
+h2{font:400 21px var(--display);margin:24px 0 8px}
+.sub{color:var(--muted);font:700 13px var(--body);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+input,select{background:#0d2536;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 12px;font:700 15px var(--body);min-width:0}
+input{flex:1}
+button{appearance:none;border:0;border-radius:12px;padding:11px 14px;font:900 14px var(--body);background:var(--teal);color:#fff;cursor:pointer}
+button.ghost{background:transparent;border:2px solid var(--line);color:var(--ink)}
+button.sun{background:var(--sun);color:var(--bg)}
+button.danger{background:transparent;border:2px solid #7a2e4a;color:#ff9fc4}
+button:disabled{opacity:.5}
+.muted{color:var(--muted)}.err{color:#ff9fc4;font-weight:800}
+.mod{display:grid;gap:10px}
+.mod .name{font:900 17px var(--body)}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font:900 12px var(--body);background:var(--card2);color:var(--muted)}
+.pill.on{background:rgba(91,227,154,.15);color:var(--ok)}.pill.off{background:rgba(255,79,154,.12);color:#ff9fc4}
+.perms{display:grid;gap:10px}
+.perms fieldset{border:1px solid var(--line);border-radius:12px;padding:6px 12px 8px;margin:0}
+.perms legend{font:900 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--sun);padding:0 6px}
+.perms label{display:flex;gap:10px;align-items:flex-start;font:700 14px var(--body);padding:6px 0;cursor:pointer}
+.perms label span{display:grid;gap:2px}.perms small{color:var(--muted);font:600 12px var(--body)}
+.perms input{flex:none;width:20px;height:20px;margin-top:1px;accent-color:var(--sun)}
+button.small{padding:7px 11px;font-size:13px}.small{font-size:13px}p.small{margin:0}
+.code{background:#0d2536;border:2px solid var(--sun);border-radius:14px;padding:12px;margin:10px 0}
+.code b.v{font:400 26px var(--display);letter-spacing:.06em;color:var(--sun)}
+table{width:100%;border-collapse:collapse;font:700 13px var(--body)}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted)}
+</style></head>
+<body><main>
+<div class="row between"><h1>Park <span>Day</span> Owner Dashboard</h1><button class="ghost small" id="topout" hidden>Sign out</button></div>
+<p class="sub">Who can help run the stream, and what each person may do. Mods sign in to the planner app with their own code.</p>
+<div id="app"></div>
+</main>
+<script>
+const KEY = "parkday-admin-code";
+// roles and permissions come from the server (/api/perms), so this page always matches the app
+let ROLES = {}, PERMS = [];
+const loadPerms = () => fetch("/api/perms").then(r => r.json()).then(j => { ROLES = { ...j.roles, custom: { label: "Custom", perms: null, what: "your own mix" } }; PERMS = j.perms; });
+const open = new Set();   // cards with the permission list expanded
+const $ = s => document.querySelector(s), app = $("#app");
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let code = ""; try { code = localStorage.getItem(KEY) || ""; } catch (e) {}
+let mods = [], shown = null, err = "";
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { "content-type": "application/json", authorization: "Bearer " + code } });
+  if (r.status === 401) { const e = new Error("That code didn't work."); e.auth = true; throw e; }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Server said " + r.status);
+  return j;
+}
+const WORDS = ["TEACUP", "MONORAIL", "CASTLE", "SKYLINER", "DUMBO", "FIGMENT", "GOOFY", "PLUTO", "EPCOT", "TIKI", "ORBIT", "PIXAR", "CHURRO", "LANTERN", "PARADE", "COMET",
+  "GALAXY", "HARBOR", "JUNGLE", "KETTLE", "LAGOON", "MAGNET", "NEBULA", "OCEAN", "PEBBLE", "QUILL", "ROCKET", "SAILOR", "TROLLEY", "UNICORN", "VOYAGE", "WAFFLE",
+  "YONDER", "ZEPHYR", "ANCHOR", "BALLOON", "CANYON", "DRAGON", "EMBER", "FALCON", "GLACIER", "HOPPER", "ISLAND", "JASPER", "KAZOO", "LOCKET", "MARBLE", "NUTMEG",
+  "OTTER", "PEPPER", "RIPPLE", "SPROCKET", "TOUCAN", "VELVET", "WHISTLE", "BISCUIT", "CRICKET", "DOODLE", "GADGET", "PRETZEL", "SPARKLER", "TWISTER", "WIDGET", "ZIPLINE"];
+// 3 random words + 4 digits: about 2 billion possible codes (and 10 wrong tries locks the guesser out)
+const newCode = () => { const b = new Uint32Array(4); crypto.getRandomValues(b); return [0, 1, 2].map(i => WORDS[b[i] % WORDS.length]).join("-") + "-" + (1000 + (b[3] % 9000)); };
+const uid = () => Math.random().toString(36).slice(2, 10);
+function signOut() { try { localStorage.removeItem(KEY); } catch (x) {} code = ""; mods = []; shown = null; login(); }
+function login(msg) {
+  $("#topout").hidden = true;
+  app.innerHTML = `<div class="card"><p><b>Sign in</b></p><p class="muted">Use the owner dashboard code (not your planner passcode, not a mod code).</p>
+    <form id="f" class="row"><input id="c" type="password" autocomplete="current-password" placeholder="Owner dashboard code"><button>Sign in</button></form>${msg ? `<p class="err">${esc(msg)}</p>` : ""}</div>`;
+  $("#f").onsubmit = async e => { e.preventDefault(); code = $("#c").value.trim(); try { const w = await api("/api/whoami"); if (w.role !== "admin" && w.role !== "owner") throw new Error("That code isn't the owner dashboard code."); try { localStorage.setItem(KEY, code); } catch (x) {} load(); } catch (x) { code = ""; login(x.message); } };
+}
+async function load() { try { if (!PERMS.length) await loadPerms(); mods = await api("/api/mods"); err = ""; } catch (e) { if (e.auth) { try { localStorage.removeItem(KEY); } catch (x) {} return login(e.message); } err = e.message; } render(); }
+async function save(list, newShown) { try { mods = await api("/api/mods", { method: "PUT", body: JSON.stringify(list) }); shown = newShown || null; err = ""; } catch (e) { err = e.message; } render(); }
+const key = l => JSON.stringify([...(l || [])].sort());
+// the preset that matches these exact permissions, else Custom
+const roleOf = m => (Object.entries(ROLES).find(([k, r]) => r.perms && key(r.perms) === key(m.perms)) || ["custom"])[0];
+const groups = () => [...new Set(PERMS.map(p => p.g))];
+function render() {
+  app.innerHTML = `
+    ${err ? `<p class="err">${esc(err)}</p>` : ""}
+    ${shown ? `<div class="code">Code for <b>${esc(shown.name)}</b>: <b class="v">${esc(shown.code)}</b><br><span class="muted">Send it to them privately. It's shown only this once; make a new one any time.</span>
+      <div class="row" style="margin-top:8px"><button class="sun" id="copy">Copy code</button><button class="ghost" id="hide">Hide</button></div></div>` : ""}
+    <h2>Add a moderator</h2>
+    <div class="card"><form id="add" class="row"><input id="n" placeholder="Their name" maxlength="40">
+      <select id="r">${Object.entries(ROLES).filter(([k]) => k !== "custom").map(([k, r]) => `<option value="${k}" ${k === "mod" ? "selected" : ""}>${r.label}: ${r.what}</option>`).join("")}</select>
+      <button>+ Add</button></form></div>
+    <h2>Moderators <span class="muted" style="font:700 14px var(--body)">${mods.length}</span></h2>
+    ${mods.length ? "" : `<p class="muted">No moderators yet.</p>`}
+    ${mods.map(m => { const r = roleOf(m), n = (m.perms || []).length, isOpen = open.has(m.id); return `
+      <div class="card mod" data-id="${esc(m.id)}">
+        <div class="row between"><span class="name">${esc(m.name)}</span><span class="pill ${m.active === false ? "off" : "on"}">${m.active === false ? "Turned off" : "Can sign in"}</span></div>
+        <div class="row"><span class="muted">Role</span><select class="role">${Object.entries(ROLES).map(([k, x]) => `<option value="${k}" ${k === r ? "selected" : ""}>${x.label}</option>`).join("")}</select>
+          <button class="ghost small more">${isOpen ? "Hide" : "Choose"} abilities (${n} of ${PERMS.length})</button></div>
+        <p class="muted small">${esc(ROLES[r].what)}</p>
+        ${isOpen ? `<div class="perms">${groups().map(g => `<fieldset><legend>${esc(g)}</legend>${PERMS.filter(p => p.g === g).map(p => `<label><input type="checkbox" class="perm" value="${p.k}" ${(m.perms || []).includes(p.k) ? "checked" : ""}><span><b>${esc(p.l)}</b><small>${esc(p.h)}</small></span></label>`).join("")}</fieldset>`).join("")}
+          <div class="row"><button class="ghost small all">All</button><button class="ghost small none">None</button></div></div>` : ""}
+        <div class="row"><button class="ghost toggle">${m.active === false ? "Turn on" : "Turn off"}</button><button class="ghost recode">New code</button><button class="danger remove">Remove</button></div>
+      </div>`; }).join("")}
+    <p class="muted" style="margin-top:24px">Signed in to the owner dashboard. <button class="ghost" id="out">Sign out</button></p>`;
+  if (shown) { $("#copy").onclick = () => { navigator.clipboard.writeText(shown.code).then(() => { $("#copy").textContent = "Copied"; }).catch(() => {}); }; $("#hide").onclick = () => { shown = null; render(); }; }
+  $("#add").onsubmit = e => { e.preventDefault(); const name = $("#n").value.trim() || "Mod", role = $("#r").value, c = newCode(); save([...mods, { id: uid(), name, role, perms: ROLES[role].perms, active: true, code: c }], { name, code: c }); };
+  $("#out").onclick = signOut;
+  const top = $("#topout"); top.hidden = false; top.textContent = "Sign out"; delete top.dataset.sure;
+  top.onclick = () => { if (top.dataset.sure) return signOut(); top.dataset.sure = "1"; top.textContent = "Tap again"; setTimeout(() => { if (top.dataset.sure) { delete top.dataset.sure; top.textContent = "Sign out"; } }, 3000); };
+  document.querySelectorAll(".mod").forEach(el => {
+    const id = el.dataset.id, m = mods.find(x => x.id === id), put = fn => save(mods.map(x => x.id === id ? fn({ ...x }) : x));
+    el.querySelector(".role").onchange = e => { const r = e.target.value; if (r === "custom") { open.add(id); render(); return; } put(x => { x.role = r; x.perms = ROLES[r].perms; return x; }); };
+    el.querySelector(".more").onclick = () => { open.has(id) ? open.delete(id) : open.add(id); render(); };
+    el.querySelectorAll(".perm").forEach(cb => cb.onchange = () => put(x => { const on = [...el.querySelectorAll(".perm")].filter(c => c.checked).map(c => c.value); x.perms = on; x.role = roleOf({ perms: on }); return x; }));
+    const setAll = on => put(x => { x.perms = on ? PERMS.map(p => p.k) : []; x.role = roleOf(x); return x; });
+    if (el.querySelector(".all")) { el.querySelector(".all").onclick = () => setAll(true); el.querySelector(".none").onclick = () => setAll(false); }
+    el.querySelector(".toggle").onclick = () => put(x => { x.active = x.active === false; return x; });
+    el.querySelector(".recode").onclick = () => { const c = newCode(); save(mods.map(x => x.id === id ? { ...x, code: c } : x), { name: m.name, code: c }); };
+    el.querySelector(".remove").onclick = () => { if (el.dataset.sure) save(mods.filter(x => x.id !== id)); else { el.dataset.sure = "1"; el.querySelector(".remove").textContent = "Tap again to remove"; } };
+  });
+}
+code ? load() : login();
+</script>
+</body></html>

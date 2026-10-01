@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Low Signal Badge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@800;900&display=swap">
+<!-- CTPG low-signal badge. OBS browser source, 1920x1080 (or 1080x1920 with ?layout=vertical).
+     Link settings: ?layout=vertical  ?msg=Your%20text  ?pos=top  ?size=1.2 (scale)  ?previewbg=image.jpg (testing only) -->
+<style>
+  :root{
+    --navy:#0B1E2E; --navy2:#12314A; --sun:#FFC933; --sun-deep:#C9960F; --pink:#FF4F9A; --mint:#BDEFEC;
+    --display:"Lilita One","Arial Black",Impact,sans-serif; --body:"Nunito","Segoe UI",Arial,sans-serif;
+    --size:1;
+  }
+  html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent}
+  html.vertical,html.vertical body{width:1080px;height:1920px}
+  html.vertical{--size:1.25}
+  body{background-size:cover;background-position:center}
+
+  #badge{position:absolute;left:40px;bottom:48px;zoom:var(--size);display:flex;align-items:center;gap:14px;
+    padding:9px 22px 9px 9px;border-radius:999px;
+    background:linear-gradient(135deg,var(--navy2),var(--navy));border:3px solid var(--sun);
+    box-shadow:0 8px 20px rgba(0,0,0,.45);overflow:hidden;
+    opacity:0;transform:translateY(30px);animation:enter .7s cubic-bezier(.2,1.25,.4,1) .2s forwards}
+  html.pos-top #badge{bottom:auto;top:40px}
+  html.vertical #badge{left:50%;bottom:300px;translate:-50% 0}
+  html.vertical.pos-top #badge{top:120px;bottom:auto}
+  @keyframes enter{to{opacity:1;transform:none}}
+
+  /* soft light sweep every 8 s */
+  #badge::after{content:"";position:absolute;top:0;bottom:0;left:-120px;width:80px;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);animation:shine 8s ease-in-out 1.5s infinite}
+  @keyframes shine{0%{left:-120px}18%,100%{left:110%}}
+
+  /* icon: yellow sticker, Wi-Fi arcs fill one by one, the outer arc can't hold */
+  .icon{position:relative;width:58px;height:58px;flex:none;border-radius:50%;background:var(--sun);
+    display:grid;place-items:center;box-shadow:inset 0 -4px 0 var(--sun-deep)}
+  .icon::before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid var(--sun);opacity:0;animation:ping 2.4s ease-out infinite}
+  @keyframes ping{0%{transform:scale(1);opacity:.7}70%,100%{transform:scale(1.55);opacity:0}}
+  .icon svg{width:38px;height:38px;margin-top:2px;overflow:visible}
+  .arc{fill:none;stroke:var(--navy);stroke-width:10;stroke-linecap:round;opacity:.2}
+  .a1{animation:a1 2.4s ease-in-out infinite}
+  .a2{animation:a2 2.4s ease-in-out infinite}
+  .a3{animation:a3 2.4s ease-in-out infinite}
+  @keyframes a1{0%,8%{opacity:.2}16%,100%{opacity:1}}
+  @keyframes a2{0%,26%{opacity:.2}34%,100%{opacity:1}}
+  @keyframes a3{0%,46%{opacity:.2}54%,62%{opacity:1}64%{opacity:.25}66%{opacity:.9}70%,100%{opacity:.2}}
+  .dot{fill:var(--navy)}
+
+  .txt{display:flex;flex-direction:column;gap:3px}
+  .title{font-family:var(--display);font-size:32px;line-height:.95;color:var(--sun);letter-spacing:.02em;white-space:nowrap;
+    -webkit-text-stroke:1.5px #06121c;paint-order:stroke fill;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+  .msg{display:flex;align-items:center;gap:7px;font-family:var(--body);font-weight:900;font-size:17px;color:var(--mint);white-space:nowrap}
+  .msg i{width:9px;height:9px;border-radius:50%;background:var(--pink);flex:none;animation:blink 1.4s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}#badge{opacity:1;transform:none}.arc{opacity:1}.a3{opacity:.2}}
+</style></head>
+<body>
+<div id="badge">
+  <div class="icon">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <path class="arc a3" d="M10 44 A56 56 0 0 1 90 44"/>
+      <path class="arc a2" d="M24 57 A36 36 0 0 1 76 57"/>
+      <path class="arc a1" d="M38 70 A17 17 0 0 1 62 70"/>
+      <circle class="dot" cx="50" cy="82" r="7.5"/>
+    </svg>
+  </div>
+  <div class="txt">
+    <div class="title">LOW SIGNAL</div>
+    <div class="msg"><i></i><span id="msg">Still live, hang tight!</span></div>
+  </div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get('layout') === 'vertical') document.documentElement.classList.add('vertical');
+  if (q.get('pos') === 'top') document.documentElement.classList.add('pos-top');
+  if (q.get('msg')) document.getElementById('msg').textContent = q.get('msg');
+  if (q.get('size')) document.documentElement.style.setProperty('--size', q.get('size'));
+  if (q.get('previewbg')) document.body.style.backgroundImage = 'url(' + q.get('previewbg') + ')';
+</script>
+</body></html>

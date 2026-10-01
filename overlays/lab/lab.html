@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Card lab</title>
+<style>
+body{margin:0;background:#111;font:16px Segoe UI,Arial;color:#ddd}
+.grid{display:grid;grid-template-columns:repeat(2,960px);gap:14px;padding:14px}
+.cell{position:relative;width:960px;height:540px;overflow:hidden;border-radius:6px}
+.cell iframe{width:1920px;height:1080px;border:0;transform:scale(.5);transform-origin:0 0}
+.cell b{position:absolute;left:8px;top:6px;background:#000c;padding:2px 8px;border-radius:4px;font-size:14px;z-index:2}
+.vgrid{display:grid;grid-template-columns:repeat(4,405px);gap:14px;padding:14px}
+.vcell{position:relative;width:405px;height:720px;overflow:hidden;border-radius:6px}
+.vcell iframe{width:1080px;height:1920px;border:0;transform:scale(.375);transform-origin:0 0}
+.vcell b{position:absolute;left:8px;top:6px;background:#000c;padding:2px 8px;border-radius:4px;font-size:13px;z-index:2}
+</style></head><body>
+<div class="grid" id="h"></div><div class="vgrid" id="v"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const look = q.get('look') || '';
+const pad = n => String(n).padStart(2,'0');
+const t = m => { const d = new Date(Date.now() + m*60000); const p = new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d); return p.find(x=>x.type==='hour').value + ':' + p.find(x=>x.type==='minute').value; };
+const C = [
+ ['Park hop', {cat:'hop', label:'Park hopping to', title:'Hollywood Studios', sub:'Leaving Magic Kingdom'}, {time:t(15),label:'Lunch at Woody’s Lunch Box'}, []],
+ ['In line + wait', {cat:'line', wait:45, label:'In line · 45 min wait', title:'Frozen Ever After', sub:'EPCOT'}, {time:t(18),label:'Remy’s Ratatouille Adventure'}, []],
+ ['Long ride name', {cat:'ride', label:'On a ride', title:'Star Wars: Rise of the Resistance', sub:'Hollywood Studios'}, {time:t(9),label:'Oga’s Cantina'}, []],
+ ['Long restaurant', {cat:'eat', label:'Eating at', title:'Be Our Guest Restaurant', sub:'Magic Kingdom'}, null, []],
+ ['Show countdown', {cat:'show', label:'Watching', title:'Festival of Fantasy Parade', sub:'Magic Kingdom'}, {time:t(12),label:'Happily Ever After'}, [{time:t(12),label:'Happily Ever After'}]],
+ ['Meet + untimed next', {cat:'meet', label:'Meeting', title:'Mickey Mouse', sub:'Magic Kingdom'}, {time:'',label:'Space Mountain'}, []],
+ ['Shopping, no item', {cat:'shop', label:'', title:'Shopping', sub:'Disney Springs'}, null, []],
+ ['Very long', {cat:'ride', label:'On a ride', title:'Harry Potter and the Escape from Gringotts', sub:'Universal Studios Florida'}, {time:t(19),label:'Hagrid’s Magical Creatures Motorbike Adventure'}, []],
+];
+function url(parts, next, shows, v){
+  const d = {now: parts.title, nowParts: parts, park: parts.sub, tz:'America/New_York', next, shows};
+  return 'overlay.html?planner=1' + (look ? '&look=' + look : '') + (v ? '&layout=vertical&previewbg=offline-dca-tall.jpg' : '&previewbg=offline-dca-wide.jpg') + '&mock=' + encodeURIComponent(JSON.stringify(d));
+}
+const vcases = q.get('vall') ? C : [C[0], C[1], C[2], C[7]];
+for (const [n,p,nx,sh] of C) h.insertAdjacentHTML('beforeend', `<div class="cell"><b>${n}</b><iframe src="${url(p,nx,sh,false)}"></iframe></div>`);
+for (const [n,p,nx,sh] of vcases) v.insertAdjacentHTML('beforeend', `<div class="vcell"><b>${n}</b><iframe src="${url(p,nx,sh,true)}"></iframe></div>`);
+</script></body></html>

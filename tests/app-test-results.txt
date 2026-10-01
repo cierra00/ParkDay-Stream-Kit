@@ -1,0 +1,125 @@
+PASS  login: shows passcode screen when signed out
+PASS  login: wrong passcode shows an error
+PASS  login: right passcode opens the app
+PASS  login: no page errors
+PASS  parks: add first park sets "here"
+PASS  parks: add second park keeps "here"
+PASS  parks: tap a park to make it "here"
+PASS  parks: search finds Disneyland Resort
+PASS  parks: 320px fits
+PASS  parks: no page errors
+PASS  now/ride: list has items  -> 32 items
+PASS  now/ride: stream gets a title  -> {"cat":"ride","label":"On a ride","title":"Haunted Mansion","sub":"Magic Kingdom","wait":35}
+PASS  now/line: list has items  -> 32 items
+PASS  now/line: stream gets a title  -> {"cat":"line","label":"In line · 55 min wait","title":"Space Mountain","sub":"Magic Kingdom","wait":55}
+PASS  now/eat: list has items  -> 23 items
+PASS  now/eat: stream gets a title  -> {"cat":"eat","label":"Eating at","title":"Casey's Corner","sub":"Magic Kingdom"}
+PASS  now/fireworks: list has items  -> 1 items
+PASS  now/fireworks: stream gets a title  -> {"cat":"fireworks","label":"Fireworks","title":"Happily Ever After","sub":"Magic Kingdom"}
+PASS  now/parade: list has items  -> 3 items
+PASS  now/parade: stream gets a title  -> {"cat":"parade","label":"Parade","title":"Starlight: Dream the Night Away","sub":"Magic Kingdom"}
+PASS  now/show: list has items  -> 16 items
+PASS  now/show: stream gets a title  -> {"cat":"show","label":"Watching","title":"Casey's Corner Pianist","sub":"Magic Kingdom"}
+PASS  now/meet: list has items  -> 7 items
+PASS  now/meet: stream gets a title  -> {"cat":"meet","label":"Meeting","title":"Ariel at Her Grotto","sub":"Magic Kingdom"}
+PASS  now/shop: stream updates  -> {"cat":"shop","label":"","title":"Shopping","sub":"Magic Kingdom"}
+PASS  now/explore: stream updates  -> {"cat":"explore","label":"Exploring","title":"Magic Kingdom","sub":""}
+PASS  now/hop: stream updates  -> {"cat":"hop","label":"Park hopping to","title":"EPCOT","sub":"Leaving Magic Kingdom"}
+PASS  now/hop: says where to  -> {"cat":"hop","label":"Park hopping to","title":"EPCOT","sub":"Leaving Magic Kingdom"}
+PASS  now: category with no pick sends nothing to stream  -> null
+PASS  now: preview tells you to pick one
+PASS  now: tapping current activity keeps the ride
+PASS  now: line sends a wait number (or 0 when closed)  -> {"cat":"line","label":"In line · 55 min wait","title":"Space Mountain","sub":"Magic Kingdom","wait":55}
+PASS  now: open ride with no posted wait says "Open" not "0 MIN"
+PASS  now: search with no match says so
+PASS  now: search filters
+PASS  now: no page errors
+PASS  concert: EPCOT list has Eat to the Beat
+PASS  concert: list shows tonight's band
+PASS  concert: stream shows the band  -> {"cat":"concert","label":"Eat to the Beat","title":"New Found Glory","sub":"EPCOT"}
+PASS  concert: typed band replaces it  -> {"cat":"concert","label":"Eat to the Beat","title":"Surprise Guest","sub":"EPCOT"}
+PASS  concert: tap 6:45 PM on Now adds it to the plan  -> ["18:45"]
+PASS  concert: countdown gets "Eat to the Beat: New Found Glory"  -> [{"id":"nuvgty1u","time":"18:45","label":"Eat to the Beat: New Found Glory","parkId":"47f90d2c-e191-4239-a466-5892ef59a88b"}]
+PASS  concert: Now stays on the concert after tapping a time
+PASS  concert: tap the time again removes it
+PASS  travel: mode only  -> {"cat":"travel","label":"","title":"Riding the Skyliner","sub":"From EPCOT","mode":"skyliner"}
+PASS  travel: with destination  -> {"cat":"travel","label":"Skyliner to","title":"Riviera Resort","sub":"From EPCOT","mode":"skyliner"}
+PASS  travel: change mode keeps destination  -> {"cat":"travel","label":"Boat to","title":"Riviera Resort","sub":"From EPCOT","mode":"boat"}
+PASS  concert/travel: no page errors
+PASS  travel@EPCOT: offers Skyliner, Monorail, Boat, Bus  -> 🚝Monorail | 🚡Skyliner | ⛴️Boat | 🛳️Ferry | 🚌Bus | 🚶Walking | 🚗Minnie Van / car
+PASS  travel@EPCOT: never offers Tram, Water taxi  -> 🚝Monorail | 🚡Skyliner | ⛴️Boat | 🛳️Ferry | 🚌Bus | 🚶Walking | 🚗Minnie Van / car
+PASS  travel@EPCOT: suggests Riviera Resort, not Disneyland Hotel  -> Magic Kingdom | EPCOT | Disney Springs | Transportation and Ticket Center | Contemporary Resort | Polynesian Village Resort
+PASS  travel@Disneyland: offers Monorail, Tram, Shuttle  -> 🚝Monorail | 🚋Tram | 🚌Shuttle | 🚶Walking | 🚗Car / rideshare
+PASS  travel@Disneyland: never offers Skyliner, Boat, Ferry, Minnie Van  -> 🚝Monorail | 🚋Tram | 🚌Shuttle | 🚶Walking | 🚗Car / rideshare
+PASS  travel@Disneyland: suggests Disneyland Hotel, not Riviera Resort  -> Disneyland | Downtown Disney | Disneyland Hotel | Grand Californian Hotel | Pixar Place Hotel | Mickey and Friends parking
+PASS  closed: fixture has closed rides to test with  -> Walt Disney's Carousel of Progress, Walt Disney World Railroad - Fantasyland, Walt Disney World Railroad - Main Street, U.S.A.
+PASS  closed: closed rides are not offered by default
+PASS  closed: "Include closed" shows them, tagged Closed
+PASS  closed: Plan tab hides closed rides too (no + Plan for them)
+PASS  plan: + Plan opens the time sheet
+PASS  plan: ride added with a time  -> [{"id":"vn53jtre","name":"Space Mountain","type":"A","parkId":"75ea578a-adc8-4116-a54d-dccb60765ef9","time":"16:15","done":false}]
+PASS  plan: custom stops added
+PASS  next: past stop never shows as NEXT  -> {"time":"16:15","label":"Space Mountain"}
+PASS  plan: show time added and sent for countdown  -> [{"id":"kp41z7a8","time":"16:35","label":"Casey's Corner Pianist","parkId":"75ea578a-adc8-4116-a54d-dccb60765ef9"}]
+PASS  plan: clear a time
+PASS  plan: check off
+PASS  plan: remove
+PASS  next: pick your own NEXT  -> {"time":"","label":"Lunch"}
+PASS  next: follow plan again
+PASS  parks: removing MK clears Now and moves here to EPCOT
+PASS  next: skips items from removed park  -> null
+PASS  countdown: skips shows from removed park  -> []
+PASS  plan: removed park is labeled
+PASS  plan/next: no page errors
+PASS  controls: card opens
+PASS  controls: status names the planned show  -> Counting down to Luminous The Symphony of Us at 9:00 PM. It appears at 6:00 PM.
+PASS  controls: window 1 hour sent  -> {"countdown":true,"within":60,"next":true,"onLive":false,"cdId":""}
+PASS  controls: status says when it appears  -> Counting down to Luminous The Symphony of Us at 9:00 PM. It appears at 8:00 PM.
+PASS  controls: countdown off sent
+PASS  controls: window choice hides when countdown is off
+PASS  controls: NEXT off sent
+PASS  controls: live scene on sent
+PASS  controls: settings survive reload  -> {"countdown":false,"within":60,"next":false,"onLive":true,"cdId":""}
+PASS  version shown in Parks tab
+PASS  controls: "Right now" sends a full-day window  -> {"countdown":true,"within":1440,"next":false,"onLive":true,"cdId":""}
+PASS  controls: status says it is on stream now  -> On stream now (top of the Now scene): Luminous The Symphony of Us starts in 5h 0m.
+PASS  controls: 320px fits
+PASS  controls: no page errors
+PASS  ⏱: nothing ticked = automatic (every planned show)  -> [{"id":"etb","time":"18:45","label":"Eat to the Beat: New Found Glory","parkId":"47f90d2c-e191-4239-a466-5892ef59a88b"},{"id":"lum","time":"21:00","label":"Luminous The Symphony of Us","parkId":"47f90d2c-e191-4239-a466-5892ef59a88b"}]
+PASS  ⏱: NEXT stays the next scheduled stop (lunch)  -> {"time":"17:00","label":"Lunch at Regal Eagle"}
+PASS  ⏱: every timed stop in Plan has the box
+PASS  ⏱: tick Luminous = top countdown follows it  -> [{"id":"lum","time":"21:00","label":"Luminous The Symphony of Us","parkId":"47f90d2c-e191-4239-a466-5892ef59a88b"}]
+PASS  ⏱: NEXT is unchanged by the countdown pick
+PASS  ⏱: ticking another moves it (only one at a time)
+PASS  ⏱: untick = back to automatic
+PASS  ⏱: boxes also in Up next / Change next
+PASS  ⏱: tick from Up next works
+PASS  ⏱: "Back to automatic" in controls
+PASS  ⏱: ticked stop checked off = back to automatic  -> [{"id":"etb","time":"18:45","label":"Eat to the Beat: New Found Glory","parkId":"47f90d2c-e191-4239-a466-5892ef59a88b"},{"id":"lum","time":"21:00","label":"Luminous The Symphony of Us","parkId":"47f90d2c-e191-4239-a466-5892ef59a88b"}]
+PASS  ⏱: no page errors
+PASS  upnext: shows what you are doing now  -> Doing now"it's a small world"1:00 PM in your planDone ✓Next on streamNothing after this. Add more in Plan.
+PASS  upnext: never says "plan is empty" when it is not  -> Doing now"it's a small world"1:00 PM in your planDone ✓Next on streamNothing after this. Add more in Plan.
+PASS  upnext: Done ✓ checks it off
+PASS  upnext: truly empty plan says so
+PASS  sync: no signal shows "Waiting for signal"
+PASS  sync: retries and recovers  -> On stream ✓
+PASS  reload: keeps what you picked
+PASS  first load: takes the newer server copy
+PASS  layout iPhone SE: Now tab has no sideways scroll  -> 0px too wide
+PASS  layout iPhone SE: Plan tab has no sideways scroll  -> 0px too wide
+PASS  layout iPhone SE: Parks tab has no sideways scroll  -> 0px too wide
+PASS  layout iPhone SE: Getting around fits  -> 0px
+PASS  layout iPhone 13: Now tab has no sideways scroll  -> 0px too wide
+PASS  layout iPhone 13: Plan tab has no sideways scroll  -> 0px too wide
+PASS  layout iPhone 13: Parks tab has no sideways scroll  -> 0px too wide
+PASS  layout iPhone 13: Getting around fits  -> 0px
+PASS  overlay: Disneyland chosen, nothing picked  -> {"card":false,"cd":false,"ticket":false}
+PASS  overlay: nothing picked but plan has NEXT  -> {"card":true,"cd":false,"ticket":false}
+PASS  overlay controls: countdown on, 3 h window, show in 90 min  -> {"card":true,"cd":true,"next":true}
+PASS  overlay controls: 1 h window, show in 90 min (not yet)  -> {"card":true,"cd":false,"next":true}
+PASS  overlay controls: countdown off  -> {"card":true,"cd":false,"next":true}
+PASS  overlay controls: NEXT off  -> {"card":true,"cd":true,"next":false}
+PASS  overlay controls: live scene, "also on live" off  -> {"card":false,"cd":false,"next":true}
+PASS  overlay controls: live scene, "also on live" on: card yes, top countdown never  -> {"card":true,"cd":false,"next":true}
+PASS  overlay controls: picked stop that is not a show (lunch) counts down  -> {"card":true,"cd":true,"next":true}
+PASS  overlay controls: "Right now": show 90 min away counts down immediately  -> {"card":true,"cd":true,"next":true}

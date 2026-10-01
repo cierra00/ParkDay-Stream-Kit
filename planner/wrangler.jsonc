@@ -1,0 +1,17 @@
+{
+  // CTPG Park Day: phone app + mod view + overlay feed, one Worker.
+  "name": "ctpg-planner",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "r2_buckets": [{ "binding": "PLAN", "bucket_name": "ctpg-planner" }],
+  "durable_objects": { "bindings": [{ "name": "HUB", "class_name": "LiveHub" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveHub"] }],
+  "routes": [{ "pattern": "planner.cruiseandthemeparkguide.com", "custom_domain": true }],
+  "observability": { "enabled": true }
+  // Secrets (set with `wrangler secret put`): OWNER_PASS, OVERLAY_KEY, BOT_KEY
+}
