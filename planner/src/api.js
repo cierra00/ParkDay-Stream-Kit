@@ -23,6 +23,24 @@ export async function sendCmd(action, extra = {}) {
     return r.ok ? { ok: true, ...j } : { ok: false, error: j.error || "Server said " + r.status };
   } catch (e) { return { ok: false, error: "No signal" }; }
 }
+// Location test mode (owner only): on/off, and GPS from this phone's browser while it is on. Never throw.
+export async function setLocTest(on) {
+  try { const r = await fetch("/api/location/testmode", { method: "PUT", headers: { "content-type": "application/json", authorization: "Bearer " + getCode() }, body: JSON.stringify({ on }) }); const j = await r.json().catch(() => ({})); return r.ok ? { ok: true } : { ok: false, error: j.error || "Server said " + r.status }; }
+  catch { return { ok: false, error: "No signal" }; }
+}
+// Location settings (owner only), e.g. { map: true, mapColor: "#FFC933" }. Never throws.
+export async function setLocConfig(o) {
+  try { const r = await fetch("/api/location/config", { method: "PUT", headers: { "content-type": "application/json", authorization: "Bearer " + getCode() }, body: JSON.stringify(o) }); const j = await r.json().catch(() => ({})); return r.ok ? { ok: true } : { ok: false, error: j.error || "Server said " + r.status }; }
+  catch { return { ok: false, error: "No signal" }; }
+}
+export async function setLocParty(mode) {
+  try { const r = await fetch("/api/location/party", { method: "PUT", headers: { "content-type": "application/json", authorization: "Bearer " + getCode() }, body: JSON.stringify({ mode }) }); const j = await r.json().catch(() => ({})); return r.ok && !j.error ? { ok: true } : { ok: false, error: j.error || "Server said " + r.status }; }
+  catch { return { ok: false, error: "No signal" }; }
+}
+export async function sendPhoneFix(body) {
+  try { const r = await fetch("/api/location/phone", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + getCode() }, body: JSON.stringify(body) }); if (r.ok) return { ok: true }; const j = await r.json().catch(() => ({})); return { ok: false, error: j.error || "Server said " + r.status, off: r.status === 409 }; }
+  catch { return { ok: false, error: "No signal" }; }
+}
 // Moderators (owner only)
 export const getMods = () => call("/api/mods");
 export const putMods = list => call("/api/mods", { method: "PUT", body: JSON.stringify(list) });

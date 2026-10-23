@@ -203,6 +203,17 @@ b.big{font:400 20px var(--display)}
 .golive-btn{width:100%;padding:16px;font:400 22px var(--display);letter-spacing:.02em;background:var(--pink);color:#fff;border-radius:16px;box-shadow:0 6px 18px rgba(255,79,154,.35)}
 .golive-btn.is-live{background:var(--card2);color:var(--ok);box-shadow:none;border:2px solid var(--ok)}
 .golive-status{font:700 12px var(--body);color:var(--muted);text-align:center;margin-top:5px}
+/* Stream box (mod view): status chips, snapshot */
+.streambox{display:grid;gap:8px}
+.stream-status{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.stream-status .chip{font:800 12px var(--body);color:var(--ink);background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+.stream-status .chip.live{color:#fff;background:var(--pink);border-color:var(--pink)}
+.stream-status .chip.good{color:var(--ok);border-color:rgba(91,227,154,.45)}
+.stream-status .chip.bad{color:#fff;background:#b3323c;border-color:#b3323c}
+.snap-btn{width:100%;padding:11px;font:800 15px var(--body);background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:14px}
+.snap img{display:block;width:100%;border-radius:12px;border:1px solid var(--line)}
+.snap-meta{font:700 12px var(--body);color:var(--muted);text-align:center;margin-top:4px}
+.snap-meta .link{appearance:none;border:0;background:none;color:var(--sun);font:800 12px var(--body);margin-left:8px;cursor:pointer}
 .modtag{font:800 12px var(--body);color:var(--bg);background:var(--sun);border-radius:999px;padding:3px 10px;margin-left:auto;margin-right:8px}
 .modcode{background:#0d2536;border:2px solid var(--sun);border-radius:12px;padding:10px 12px;margin:8px 0;font:700 14px var(--body)}
 .modcode .code{font:400 22px var(--display);letter-spacing:.06em;color:var(--sun)}
@@ -218,3 +229,52 @@ b.big{font:400 20px var(--display)}
 /* sign out, top bar on every account */
 .signout { flex: none; margin-left: 8px; background: transparent; border: 1.5px solid var(--line); color: var(--muted); border-radius: 999px; padding: 5px 11px; font: 800 12px var(--body); cursor: pointer; }
 .signout.sure { border-color: #ff4f9a; color: #ff9fc4; }
+
+/* Location scene box (preview + check view) */
+.locbox{margin:10px 0 8px;background:var(--card,#143651);border:1px solid var(--line,#24506f);border-radius:16px;padding:10px 12px}
+.locbox summary{display:flex;gap:8px;align-items:center;cursor:pointer;list-style:none}
+.locbox summary::-webkit-details-marker{display:none}
+.locbox .label{font:400 17px var(--display);flex:1}
+.locbox .chip.good{background:rgba(91,227,154,.18);color:#5BE39A}
+.loc-in{display:grid;gap:10px;margin-top:10px}
+.loc-pv{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:10px;background:#0B1E2E}
+.loc-pv iframe{position:absolute;left:0;top:0;width:1920px;height:1080px;border:0;transform-origin:0 0;pointer-events:none}
+.loc-check{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start}
+.loc-map{width:150px;height:150px;background:#0d2536;border-radius:12px}
+.loc-map .ring{fill:none;stroke:#24506f;stroke-dasharray:3 4}
+.loc-map .ring.close{stroke:#FFC933}
+.loc-map .spot{fill:#9FC4CF}.loc-map .spot.tA{fill:#1FB8B4}.loc-map .spot.tR{fill:#FF4F9A}.loc-map .spot.tS{fill:#7A3CF0}.loc-map .spot.tC{fill:#FFC933}
+.loc-map text{fill:#F3FAFB;font:800 11px var(--body,sans-serif)}
+.loc-map .me{fill:#fff;stroke:#FF4F9A;stroke-width:3}
+.loc-facts ol{margin:6px 0;padding-left:18px}
+.loc-facts .small{font-size:12px}
+.hint.warn{color:#ffb4c8}
+
+/* phone widths: nothing may push the page sideways (the mod view's Stream box did, Oct 1) */
+.streambox{grid-template-columns:minmax(0,1fr)}
+.stream-status .chip{flex:0 1 auto;white-space:normal;max-width:100%;text-align:center}
+header.top{flex-wrap:wrap;row-gap:6px}
+header.top .modtag{max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.locbox{min-width:0}
+.golive-btn,.snap-btn{white-space:normal;line-height:1.15}
+
+/* location test mode */
+.locbox .chip.test{background:rgba(255,201,51,.18);color:#FFC933}
+.loc-test{display:grid;gap:6px;margin:8px 0}
+.loc-test .row-wrap{display:flex;flex-wrap:wrap;gap:8px}
+/* header: keep "Park Day" on one line, let the chips wrap under it */
+header.top h1{white-space:nowrap}
+
+/* real map in the Location box */
+.loc-check:has(.loc-lmap){grid-template-columns:minmax(0,1fr)}
+.loc-lmap{height:300px;border-radius:12px;overflow:hidden;background:#dfe7ea;isolation:isolate}
+.loc-tip{font:800 12px var(--body,sans-serif);padding:2px 6px;border-radius:8px;border:0;box-shadow:0 1px 4px rgba(0,0,0,.4);color:#0B1E2E}
+.loc-tip.num{padding:1px 6px;font-size:13px}
+/* location box: round map switch, border colours, Heading to line */
+.loc-opts,.loc-head{margin-top:8px;border-top:1px solid var(--line,#24506f);padding-top:4px}
+.swatches{display:flex;gap:8px}
+.swatch{width:30px;height:30px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px rgba(255,255,255,.35);cursor:pointer;padding:0}
+.swatch.on{border-color:#0B1E2E;box-shadow:0 0 0 3px #FFF8EC}
+.loc-head .row-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.loc-head .input{flex:1 1 180px;min-width:0;font:800 15px var(--body);padding:8px 10px;border-radius:10px;border:1px solid var(--line,#24506f);background:#0B1E2E;color:#fff}
+.loc-master{margin-top:0;padding-bottom:8px;border-bottom:1px solid var(--line,#24506f)}

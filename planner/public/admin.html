@@ -3,6 +3,8 @@
 <title>Park Day Owner Dashboard</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="/icon-192.png">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<script src="/vendor/leaflet/leaflet.js"></script>
 <style>
 :root{color-scheme:dark;--bg:#0B1E2E;--bg2:#12314A;--card:#143651;--card2:#19405F;--line:#24506f;--ink:#F3FAFB;--muted:#9FC4CF;--teal:#1FB8B4;--sun:#FFC933;--pink:#FF4F9A;--ok:#5BE39A;
  --body:"Nunito","Segoe UI",system-ui,sans-serif;--display:"Lilita One","Arial Black",Impact,sans-serif}
@@ -36,11 +38,46 @@ button:disabled{opacity:.5}
 button.small{padding:7px 11px;font-size:13px}.small{font-size:13px}p.small{margin:0}
 .code{background:#0d2536;border:2px solid var(--sun);border-radius:14px;padding:12px;margin:10px 0}
 .code b.v{font:400 26px var(--display);letter-spacing:.06em;color:var(--sun)}
+.log td{vertical-align:top}.log td.t{white-space:nowrap;color:var(--muted)}.log td.w{white-space:nowrap}.log tr.bad td{color:#ff9fc4}.log tr.obs td{color:var(--muted)}
+.logwrap{max-height:70vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:0 8px}
+.vtabs{display:flex;gap:6px;margin:6px 0 4px;flex-wrap:wrap}.vtabs button{background:transparent;border:2px solid var(--line);color:var(--ink)}.vtabs button.on{background:var(--sun);color:var(--bg);border-color:var(--sun)}
+body.wide main{max-width:980px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 12px}.grid2 label{display:grid;gap:4px;font:800 13px var(--body);color:var(--muted)}
+.grid2 label.chk{display:flex;align-items:center;gap:8px;color:var(--ink)}.grid2 label.chk input{flex:none;width:20px;height:20px;accent-color:var(--sun)}
+.ok{color:var(--ok)}.warn{color:#ff9fc4}.dim{color:var(--muted)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;word-break:break-all;background:#0d2536;border-radius:10px;padding:8px 10px}
+.parks{display:grid;gap:6px}.parks .prow{display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--card2);border-radius:12px;padding:8px 10px}
+.lands{display:flex;flex-wrap:wrap;gap:6px}.lands .ld{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:4px 6px 4px 10px;font:800 13px var(--body);color:#0B1E2E}
+.lands .ld button{padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.25);color:#fff;font-size:12px}
+.mapwrap{background:#0d2536;border-radius:14px;overflow:hidden}
+#lmap{isolation:isolate;height:60vh;min-height:320px;max-height:720px;background:#dfe7ea;font:700 13px var(--body)}
+@media (min-width:900px){body.wide #lmap{height:640px}}
+#lmap.tap-any{cursor:crosshair}
+.ocard{margin-top:8px;display:grid;gap:8px}.ocard select{width:100%}.ocard .row{flex-wrap:wrap;gap:6px}.ostat{font:700 13px var(--body)}
+.ostat b{color:#ffd166}
+.ocorner{background:#FF4F9A;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px #0008;cursor:grab}
+.orow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.orow .push{margin-left:auto}
+#lmap .leaflet-control-layers{font:800 13px var(--body);border-radius:10px}
+#lmap .leaflet-control-layers label{padding:2px 0}
+.splabel{font:800 12px var(--body);padding:2px 6px;border-radius:8px;border:0;box-shadow:0 1px 4px rgba(0,0,0,.4);color:#0B1E2E}
+.maphint{margin:6px 0 0}
+.vtabs.sub{margin:14px 0 4px}.vtabs.sub button{padding:9px 12px;font-size:13px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-bottom:8px}
+.modes button{background:transparent;border:2px solid var(--line);color:var(--ink);padding:10px 8px;font-size:14px}
+.modes button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.paintl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+.paintl button{padding:6px 10px;font-size:13px;border-radius:999px;background:transparent;border:2px solid var(--c);color:var(--ink)}
+.paintl button.on{background:var(--c);color:#0B1E2E}
+.savebar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:8px;padding:8px 10px;border-radius:12px;background:#0d2536;position:sticky;bottom:8px;z-index:500}
+.savebar.need{outline:2px solid var(--sun)}
+.spots{max-height:55vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
+.spots td select{padding:6px 8px;font-size:13px;border-radius:8px;max-width:190px}.spots tr.sel td{background:rgba(255,201,51,.12)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 10px;font:800 12px var(--body)}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
 table{width:100%;border-collapse:collapse;font:700 13px var(--body)}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted)}
 </style></head>
 <body><main>
 <div class="row between"><h1>Park <span>Day</span> Owner Dashboard</h1><button class="ghost small" id="topout" hidden>Sign out</button></div>
-<p class="sub">Who can help run the stream, and what each person may do. Mods sign in to the planner app with their own code.</p>
+<p class="sub">Who can help run the stream, what each person may do, a log of who pressed what, and the Location scene. Mods sign in to the planner app with their own code.</p>
 <div id="app"></div>
 </main>
 <script>
@@ -85,6 +122,8 @@ function render() {
     ${err ? `<p class="err">${esc(err)}</p>` : ""}
     ${shown ? `<div class="code">Code for <b>${esc(shown.name)}</b>: <b class="v">${esc(shown.code)}</b><br><span class="muted">Send it to them privately. It's shown only this once; make a new one any time.</span>
       <div class="row" style="margin-top:8px"><button class="sun" id="copy">Copy code</button><button class="ghost" id="hide">Hide</button></div></div>` : ""}
+    <div class="vtabs">${[["mods", "Moderators"], ["act", "Activity"], ["loc", "Location"]].map(([k, l]) => `<button class="${view === k ? "on" : ""}" data-v="${k}">${l}</button>`).join("")}</div>
+    <section data-v="mods">
     <h2>Add a moderator</h2>
     <div class="card"><form id="add" class="row"><input id="n" placeholder="Their name" maxlength="40">
       <select id="r">${Object.entries(ROLES).filter(([k]) => k !== "custom").map(([k, r]) => `<option value="${k}" ${k === "mod" ? "selected" : ""}>${r.label}: ${r.what}</option>`).join("")}</select>
@@ -101,12 +140,21 @@ function render() {
           <div class="row"><button class="ghost small all">All</button><button class="ghost small none">None</button></div></div>` : ""}
         <div class="row"><button class="ghost toggle">${m.active === false ? "Turn on" : "Turn off"}</button><button class="ghost recode">New code</button><button class="danger remove">Remove</button></div>
       </div>`; }).join("")}
+    </section>
+    <section data-v="act">
+    <h2>Activity <span class="muted" style="font:700 14px var(--body)">who pressed what</span></h2>
+    <div class="card" id="act"></div>
+    </section>
+    <section data-v="loc"><div id="loc"></div></section>
     <p class="muted" style="margin-top:24px">Signed in to the owner dashboard. <button class="ghost" id="out">Sign out</button></p>`;
   if (shown) { $("#copy").onclick = () => { navigator.clipboard.writeText(shown.code).then(() => { $("#copy").textContent = "Copied"; }).catch(() => {}); }; $("#hide").onclick = () => { shown = null; render(); }; }
   $("#add").onsubmit = e => { e.preventDefault(); const name = $("#n").value.trim() || "Mod", role = $("#r").value, c = newCode(); save([...mods, { id: uid(), name, role, perms: ROLES[role].perms, active: true, code: c }], { name, code: c }); };
   $("#out").onclick = signOut;
   const top = $("#topout"); top.hidden = false; top.textContent = "Sign out"; delete top.dataset.sure;
   top.onclick = () => { if (top.dataset.sure) return signOut(); top.dataset.sure = "1"; top.textContent = "Tap again"; setTimeout(() => { if (top.dataset.sure) { delete top.dataset.sure; top.textContent = "Sign out"; } }, 3000); };
+  renderLog();
+  document.querySelectorAll(".vtabs button").forEach(b => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem("parkday-admin-view", view); } catch (x) {} applyView(); });
+  applyView();
   document.querySelectorAll(".mod").forEach(el => {
     const id = el.dataset.id, m = mods.find(x => x.id === id), put = fn => save(mods.map(x => x.id === id ? fn({ ...x }) : x));
     el.querySelector(".role").onchange = e => { const r = e.target.value; if (r === "custom") { open.add(id); render(); return; } put(x => { x.role = r; x.perms = ROLES[r].perms; return x; }); };
@@ -119,6 +167,521 @@ function render() {
     el.querySelector(".remove").onclick = () => { if (el.dataset.sure) save(mods.filter(x => x.id !== id)); else { el.dataset.sure = "1"; el.querySelector(".remove").textContent = "Tap again to remove"; } };
   });
 }
+// Activity log: every change, stream button, mod change and lockout, kept 30 days by the server
+let log = null, logDays = 1, logWho = "", logErr = "";
+async function loadLog() {
+  try { log = await api("/api/log?days=" + logDays); logErr = ""; } catch (e) { logErr = e.message; }
+  renderLog();
+}
+const when = t => new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit" });
+function renderLog() {
+  const box = $("#act"); if (!box) return;
+  if (!log && !logErr) { box.innerHTML = `<p class="muted">Loading…</p>`; loadLog(); return; }
+  const people = [...new Set((log || []).map(r => r.who))].sort();
+  const rows = (log || []).filter(r => !logWho || r.who === logWho);
+  box.innerHTML = `<div class="row">
+      <select id="ld">${[[1, "Last 24 hours"], [7, "Last 7 days"], [30, "Last 30 days"]].map(([v, l]) => `<option value="${v}" ${v === logDays ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <select id="lw"><option value="">Everyone</option>${people.map(p => `<option ${p === logWho ? "selected" : ""}>${esc(p)}</option>`).join("")}</select>
+      <button class="ghost small" id="lr">Refresh</button><button class="ghost small" id="lc" ${rows.length ? "" : "disabled"}>Download</button></div>
+    ${logErr ? `<p class="err">${esc(logErr)}</p>` : ""}
+    <p class="muted small" style="margin:8px 0">${rows.length} ${rows.length === 1 ? "entry" : "entries"}, newest first. Kept for 30 days.</p>
+    ${rows.length ? `<div class="logwrap"><table class="log"><tr><th>When</th><th>Who</th><th>What</th></tr>${rows.map(r => `<tr class="${r.ok === 0 ? "bad" : r.kind === "obs" ? "obs" : ""}"><td class="t">${esc(when(r.at))}</td><td class="w">${esc(r.who)}</td><td>${esc(r.what)}</td></tr>`).join("")}</table></div>` : `<p class="muted">Nothing yet in this time range.</p>`}`;
+  $("#ld").onchange = e => { logDays = +e.target.value; log = null; renderLog(); };
+  $("#lw").onchange = e => { logWho = e.target.value; renderLog(); };
+  $("#lr").onclick = () => loadLog();
+  $("#lc").onclick = () => {
+    const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = ["When,Who,Role,Kind,What,Worked", ...rows.map(r => [new Date(r.at).toLocaleString(), r.who, r.role, r.kind, r.what, r.ok === 1 ? "yes" : r.ok === 0 ? "no" : ""].map(q).join(","))].join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv" }));
+    a.download = "park-day-activity-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+}
+let view = "mods"; try { view = localStorage.getItem("parkday-admin-view") || "mods"; } catch (x) {}
+function applyView() {
+  document.querySelectorAll("section[data-v]").forEach(s => { s.hidden = s.dataset.v !== view; });
+  document.querySelectorAll(".vtabs button").forEach(b => b.classList.toggle("on", b.dataset.v === view));
+  document.body.classList.toggle("wide", view === "loc");
+  if (view === "loc") renderLoc();
+}
+// ---------------- Location tab: GPS from Moblin, the "location" scene, lands per park ----------------
+const TP = "https://api.themeparks.wiki/v1";
+const TYPES = { ATTRACTION: "A", SHOW: "S", RESTAURANT: "R" }, TYPE_L = { A: "Ride", S: "Show", R: "Food", H: "Shop", P: "Place", C: "Own spot" };
+const COLORS = ["#1FB8B4", "#FF4F9A", "#FFC933", "#7A3CF0", "#5BE39A", "#FF7A1A", "#3B8FF0", "#E8384F", "#22B573", "#C026D3", "#0EA5E9", "#F59E0B", "#A3E635", "#F472B6", "#94A3B8", "#FDE68A"];
+let L = { info: null, err: "", prefill: null, park: null, sel: null, mode: "pick", paint: "", test: null, newKey: "", filter: "", busy: "",
+  sub: (() => { try { return localStorage.getItem("parkday-admin-locsub") || "map"; } catch (x) { return "map"; } })(),
+  pick: (() => { try { return localStorage.getItem("parkday-admin-park") || ""; } catch (x) { return ""; } })() };
+const savedPark = id => ((L.info && L.info.parks) || []).find(x => x.id === id);
+// outside the parks: hotels, stations, docks and transport, kept like a park under these ids
+const RESORTS = { "resort-wdw": "Outside the parks: Walt Disney World", "resort-uo": "Outside the parks: Universal Orlando", "resort-dlr": "Outside the parks: Disneyland Resort" };
+const RESORT_NAME = { "resort-wdw": "Walt Disney World Resort", "resort-uo": "Universal Orlando Resort", "resort-dlr": "Disneyland Resort" };
+const isResort = id => !!RESORTS[id];
+const parkIds = () => [...new Set([...Object.keys(L.prefill || {}).filter(k => !k.startsWith("_")), ...((L.info && L.info.parks) || []).map(x => x.id).filter(id => !isResort(id)), ...Object.keys(RESORTS)])];
+const parkName = id => { if (isResort(id)) return RESORTS[id]; const sv = savedPark(id); return sv ? sv.name : (L.prefill && L.prefill[id] ? L.prefill[id].name : id); };
+const pf = async () => L.prefill || (L.prefill = await fetch("/lands-prefill.json", { cache: "no-store" }).then(r => r.json()).catch(() => ({})));
+async function locLoad() { try { L.info = await api("/api/location"); L.err = ""; } catch (e) { L.err = e.message; } }
+const metersBetween = (a, b) => { const r = Math.PI / 180, x = (b.lon - a.lon) * r * Math.cos((a.lat + b.lat) / 2 * r), y = (b.lat - a.lat) * r; return Math.sqrt(x * x + y * y) * 6371000; };
+// suggestions: every spot gets the land of its nearest anchor (anchors = exact names in lands-prefill.json)
+function suggest(spots, lands) {
+  const anchors = [];
+  for (const [land, names] of Object.entries(lands || {})) for (const n of names) { const s = spots.find(x => x.n === n); if (s) anchors.push([land, s]); }
+  const assign = {};
+  if (anchors.length) for (const s of spots) { let b = null; for (const [land, a] of anchors) { const d = metersBetween(s, a); if (!b || d < b[1]) b = [land, d]; } assign[s.id] = b[0]; }
+  return assign;
+}
+async function fetchSpots(id) {
+  const d = await fetch(`${TP}/entity/${id}/children`).then(r => { if (!r.ok) throw new Error("Park data answered " + r.status); return r.json(); });
+  const spots = (d.children || []).filter(c => c.location && TYPES[c.entityType] && !/allergy request/i.test(c.name))
+    .map(c => ({ id: c.id, n: c.name, t: TYPES[c.entityType], lat: c.location.latitude, lon: c.location.longitude }));
+  return { name: d.name || "Park", spots };
+}
+async function openPark(id) {
+  L.busy = "Loading park…"; renderLoc();
+  try {
+    const p = await pf();
+    let park = await api("/api/location/park?id=" + encodeURIComponent(id));
+    if (isResort(id)) { park = park || { id, name: RESORTS[id], spots: [], lands: [], assign: {}, custom: [] }; park.resort = true; park.name = RESORTS[id]; }
+    else if (!park) {
+      const f = await fetchSpots(id), sug = p[id] || { lands: {} };
+      park = { id, name: f.name, spots: f.spots, lands: Object.keys(sug.lands), assign: suggest(f.spots, sug.lands), custom: [], fresh: true };
+    }
+    park.shapes = park.shapes || {};
+    await loadBuiltin();
+    L.park = park; L.sel = null; L.test = null; L.mode = park.resort ? "outline" : "pick"; L.paint = park.lands[0] || ""; L.oSel = null; L.draw = null;
+    park.orig = snap(park);
+    const dr = readDraft(id);
+    if (dr && dr.orig) {
+      const n = mergeLocal(park, dr, dr.orig);
+      if (n) { park.dirty = true; L.note = `Brought back ${n} unsaved change${n > 1 ? "s" : ""} from ${new Date(dr.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Saving them now.`; }
+      if (dr.draw && dr.draw.length) { L.mode = "outline"; L.oSel = dr.oSel; L.draw = dr.draw; L.adjust = dr.adjust; L.drawHist = []; L.note = (L.note ? L.note + " " : "") + "Your half-drawn outline is back: tap Done when it looks right."; }
+      if (!n && !(dr.draw && dr.draw.length)) dropDraft(id);
+    }
+  } catch (e) { L.err = e.message; }
+  L.busy = ""; renderLoc();
+}
+async function savePark() {
+  const p = L.park; L.busy = "Saving…"; renderLoc();
+  try { await putPark(p); await locLoad(); L.err = ""; L.note = (L.note && /dropped/.test(L.note) ? L.note + " " : "") + "Saved " + p.name + "."; }
+  catch (e) { L.err = e.message; }
+  L.busy = ""; renderLoc();
+}
+// ---- never lose edits (Oct 4): every change is kept on this device right away (a draft that comes back after a reload,
+// a closed tab or the phone dropping the page), saved to the server a few seconds after you stop, and merged with changes
+// saved from another device instead of overwriting them. Leaving with something unsaved asks first.
+const DRAFT = id => "pd-draft:" + id;
+const pick = p => ({ lands: p.lands, assign: p.assign, custom: p.custom, shapes: p.shapes || {} });
+const snap = p => JSON.parse(JSON.stringify(pick(p)));
+function readDraft(id) { try { return JSON.parse(localStorage.getItem(DRAFT(id)) || "null"); } catch { return null; } }
+function dropDraft(id) { try { localStorage.removeItem(DRAFT(id)); } catch {} }
+function keepDraft() {
+  const p = L.park; if (!p || p.fresh) return;
+  try { if (!p.dirty && !(L.draw && L.draw.length)) { localStorage.removeItem(DRAFT(p.id)); return; } localStorage.setItem(DRAFT(p.id), JSON.stringify({ at: Date.now(), orig: p.orig, ...pick(p), draw: L.draw || null, adjust: !!L.adjust, oSel: L.oSel || null })); } catch {}
+}
+// put what changed here (compared with what was loaded) on top of the server's copy; returns how many things changed
+function mergeLocal(into, mine, orig) {
+  let n = 0; const J = JSON.stringify;
+  for (const f of ["shapes", "assign"]) {
+    into[f] = into[f] || {};
+    for (const k of new Set([...Object.keys(mine[f] || {}), ...Object.keys(orig[f] || {})])) {
+      const a = (mine[f] || {})[k], b = (orig[f] || {})[k];
+      if (J(a) === J(b)) continue;
+      n++; if (a === undefined) delete into[f][k]; else into[f][k] = a;
+    }
+  }
+  const byId = l => new Map((l || []).map(c => [c.id, c])), M = byId(mine.custom), O = byId(orig.custom), I = byId(into.custom);
+  for (const k of new Set([...M.keys(), ...O.keys()])) { if (J(M.get(k)) === J(O.get(k))) continue; n++; if (M.has(k)) I.set(k, M.get(k)); else I.delete(k); }
+  into.custom = [...I.values()];
+  if (J(mine.lands) !== J(orig.lands)) { n++; into.lands = mine.lands; }
+  return n;
+}
+async function putPark(p) {
+  for (let tries = 0; tries < 3; tries++) {
+    const body = { name: p.name, spots: p.spots, lands: p.lands, assign: p.assign, custom: p.custom, shapes: p.shapes || {}, base: p.at || 0 };
+    const sentShapes = Object.keys(body.shapes).length;
+    const r = await fetch("/api/location/park?id=" + encodeURIComponent(p.id), { method: "PUT", body: JSON.stringify(body), headers: { "content-type": "application/json", authorization: "Bearer " + code } });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 409 && j.park) {
+      // saved from another device since this page loaded: keep theirs, put ours on top, try again
+      const mine = { ...pick(p) }, orig = p.orig || snap(j.park);
+      Object.assign(p, { lands: j.park.lands, assign: j.park.assign, custom: j.park.custom, shapes: j.park.shapes || {}, at: j.park.at });
+      mergeLocal(p, mine, orig); p.orig = snap(j.park); continue;
+    }
+    if (!r.ok) throw new Error(j.error || "Server said " + r.status);
+    p.at = j.at; p.fresh = false; p.dirty = false; p.orig = snap(p);
+    if (!L.draw || !L.draw.length) dropDraft(p.id); else keepDraft();
+    if (j.shapes !== undefined && j.shapes < sentShapes) L.note = `Heads up: ${sentShapes - j.shapes} outline(s) were dropped by the server (too many corners or too far from the spot).`;
+    return j;
+  }
+  throw new Error("Could not save: changed on another device at the same time. Your changes are kept on this device; tap Save again.");
+}
+let autoBusy = false, lastDirtyAt = 0, wasDirty = false;
+setInterval(async () => {
+  const p = L.park; if (!p) return;
+  keepDraft();
+  if (p.dirty && !wasDirty) lastDirtyAt = Date.now();
+  wasDirty = !!p.dirty;
+  if (!p.dirty || p.fresh || autoBusy || L.busy || Date.now() - lastDirtyAt < 3000) return;
+  autoBusy = true;
+  try {
+    await putPark(p); wasDirty = false;
+    const bar = document.querySelector(".savebar"); if (bar && L.park === p) { bar.classList.remove("need"); const t = bar.querySelector("span"); if (t) t.textContent = "Saved automatically " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); const d = document.getElementById("pdiscard"); if (d) d.remove(); }
+  } catch (e) { const bar = document.querySelector(".savebar span"); if (bar) bar.textContent = "Not saved yet (kept on this device): " + e.message; }
+  autoBusy = false;
+}, 1500);
+addEventListener("beforeunload", e => { keepDraft(); const p = L.park; if (p && (p.dirty || (L.draw && L.draw.length))) { e.preventDefault(); e.returnValue = ""; } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") keepDraft(); });
+async function setupAll() {
+  const p = await pf(), have = new Set(((L.info && L.info.parks) || []).map(x => x.id));
+  const todo = Object.keys(p).filter(id => !id.startsWith("_") && !have.has(id));
+  let n = 0;
+  for (const id of todo) {
+    L.busy = `Setting up ${p[id].name} (${++n} of ${todo.length})…`; renderLoc();
+    try {
+      const f = await fetchSpots(id);
+      await api("/api/location/park?id=" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify({ name: f.name, spots: f.spots, lands: Object.keys(p[id].lands), assign: suggest(f.spots, p[id].lands), custom: [] }) });
+    } catch (e) { L.err = `${p[id].name}: ${e.message}`; }
+    await new Promise(r => setTimeout(r, 400));
+  }
+  await locLoad(); L.busy = ""; L.note = "Done. Suggested lands are a starting point: open each park and check them."; renderLoc();
+}
+function renderLoc() {
+  const root = $("#loc"); if (!root) return;
+  if (!L.info && !L.err) { root.innerHTML = `<p class="muted">Loading…</p>`; locLoad().then(renderLoc); return; }
+  if (!L.prefill) { root.innerHTML = `<p class="muted">Loading…</p>`; pf().then(renderLoc); return; }
+  const sub = L.sub;
+  const i = L.info || {}, c = i.cfg || {}, park = L.park;
+  const host = location.origin;
+  const ago = s => s == null ? "never" : s < 90 ? s + " s ago" : Math.round(s / 60) + " min ago";
+  const fixAge = i.check && i.check.at ? Math.round((Date.now() - i.check.at) / 1000) : null;
+  root.innerHTML = `
+    ${L.err ? `<p class="err">${esc(L.err)}</p>` : ""}${L.note ? `<p class="ok">${esc(L.note)}</p>` : ""}${L.busy ? `<p class="dim">${esc(L.busy)}</p>` : ""}
+    <div class="card"><div class="row between"><b>Location features</b><span class="small dim">On/off switch: planner app, 📍 Location scene</span></div>
+      <p class="small ${c.enabled ? "ok" : "dim"}" style="margin-top:6px">${c.enabled ? "On. Location updates the whole time you are live (and while the scene below is on air); the card shows only on that scene." : "Off. GPS from Moblin is ignored. Turn it on in the planner app (📍 Location scene)."}</p>
+      <p class="small">OBS on air now: <b>${esc(i.obs ? i.obs.scene || "?" : "unknown (is OBS open?)")}</b>${i.obs && i.obs.vertical ? ` · vertical <b>${esc(i.obs.vertical)}</b>` : ""} · Location ${i.on ? `<b class="ok">UPDATING</b> (live or location scene on air)` : "not updating (not live)"}</p>
+      ${i.test ? `<p class="small warn" style="color:var(--sun)">🧪 Test mode on until ${new Date(i.test.until).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}${i.src ? ` · GPS from ${i.src === "phone" ? "your phone" : "Moblin"}` : ""}. OBS shows it (tagged TEST) only while not streaming.</p>` : ""}
+      ${i.on || i.test ? `<p class="small">${i.on ? "Showing" : "Would show"}: <b>${esc(i.show ? (i.show.travel ? "Travelling" : [i.show.ride, i.show.land, i.show.park].filter(Boolean).join(" · ") || "outside the parks") : "nothing yet")}</b> · last GPS update ${ago(fixAge)}</p>` : ""}
+      <p class="small dim">GPS updates today: ${(i.stats && i.stats.seen) || 0} received, ${(i.stats && i.stats.used) || 0} used (free plan: 100,000 a day).</p>
+      <div class="row"><button class="ghost small" id="lref">Refresh</button><button class="${i.test ? "ghost" : "sun"} small" id="ltest">${i.test ? "End test mode" : "Start test mode"}</button></div>
+      ${i.test ? "" : `<p class="small dim" style="margin-top:6px">Test mode: try it without being live (3 hours). In the planner app's Location box, tap "Use this phone's GPS" to walk with it.</p>`}</div>
+    <div class="vtabs sub">${[["map", "🗺️ Map and lands"], ["set", "⚙️ Settings"], ["setup", "📱 Moblin and OBS"]].map(([k, l]) => `<button class="${sub === k ? "on" : ""}" data-sub="${k}">${l}</button>`).join("")}</div>
+    ${sub === "map" ? `
+    <div class="card"><div class="row"><b>Park</b><select id="ppick" style="flex:1">${parkIds().map(id => { const sv = savedPark(id); return `<option value="${esc(id)}" ${(park ? park.id : L.pick) === id ? "selected" : ""}>${esc(parkName(id))}${sv ? (sv.places != null ? ` · ${sv.places} places, ${sv.outlines} outlined by you` : ` · ${sv.tagged} of ${sv.spots} tagged`) : " · not set up yet"}</option>`; }).join("")}</select></div>
+      <p class="small dim" style="margin-top:6px">Lands are what the scene shows by default. Suggestions come from a few rides per land that Claude placed; everything else takes its nearest one. Check every park before using it.</p>
+      <div class="row"><button class="ghost small" id="lall">Set up all parks with suggestions</button></div></div>
+    ${park ? parkEditor(park) : `<p class="muted">Loading park…</p>`}` : sub === "set" ? `
+    <div class="card"><form id="lcfg" class="grid2">
+      <label>Scene that turns GPS on<input name="scene" value="${esc(c.scene)}"></label>
+      <label>Vertical scene that also turns it on<input name="vscene" value="${esc(c.vscene)}"></label>
+      <label class="chk"><input type="checkbox" name="showRide" ${c.showRide ? "checked" : ""}>Show the ride name when close</label>
+      <label>"Close to a ride" (meters from its dot; rides with a mapped outline also count anywhere inside it, or within 15 m of it)<input name="closeM" type="number" min="5" max="200" value="${c.closeM}"></label>
+      <label>... for this many seconds<input name="dwellS" type="number" min="0" max="600" value="${c.dwellS}"></label>
+      <label>Land: nearest tagged spot within (meters)<input name="landM" type="number" min="20" max="500" value="${c.landM}"></label>
+      <label>Delay before the scene changes (seconds)<input name="delayS" type="number" min="0" max="300" value="${c.delayS}"></label>
+      <label>Text when there is nothing to show (empty = hide)<input name="fallback" maxlength="80" value="${esc(c.fallback)}"></label>
+      <div><button>Save settings</button></div></form></div>` : `
+    <h2>Moblin (streaming phone)</h2>
+    <div class="card"><p class="small">Settings, Streams, your stream, <b>RealtimeIRL</b>: turn on, then</p>
+      <p class="small">Base URL</p><div class="mono">${esc(host)}/api/gps</div>
+      <p class="small" style="margin-top:8px">Push key: ${i.keySet ? "set (hidden). Making a new one stops the old one." : "<b>not made yet</b>"}</p>
+      ${L.newKey ? `<div class="code">GPS key: <b class="v" style="font-size:18px;word-break:break-all">${esc(L.newKey)}</b><br><span class="muted">Shown only this once. It can only send a location.</span><div class="row" style="margin-top:8px"><button class="sun" id="kcopy">Copy key</button><button class="ghost" id="khide">Hide</button></div></div>` : ""}
+      <div class="row"><button class="ghost" id="lkey">${i.keySet ? "Make a new GPS key" : "Make the GPS key"}</button></div>
+      <p class="small dim" style="margin-top:8px">Also in Moblin, Settings, Location: Enabled, and privacy regions for home and hotels. Moblin only sends while you are live.</p></div>
+    <h2>OBS</h2>
+    <div class="card"><p class="small">Scene <b>${esc(c.scene)}</b> (and <b>${esc(c.vscene)}</b> on the vertical canvas) with a browser source:</p>
+      <div class="mono">${esc(host)}/location?key=&lt;overlay key&gt;</div><div class="mono" style="margin-top:4px">${esc(host)}/location?key=&lt;overlay key&gt;&amp;layout=vertical</div>
+      <p class="small dim">Same overlay key as the NOW card. Options: &amp;pos=bl (bottom left, default), tl, tr, br.</p></div>`}`;
+  document.querySelectorAll("[data-sub]").forEach(b => b.onclick = () => {
+    if (L.park && L.park.dirty && b.dataset.sub !== "map" && !confirm("You have unsaved land changes. Leave the map anyway? (They stay until you reload.)")) return;
+    L.sub = b.dataset.sub; try { localStorage.setItem("parkday-admin-locsub", L.sub); } catch (x) {} renderLoc();
+  });
+  if (sub === "map") {
+    $("#ppick").onchange = e => { const id = e.target.value; if (L.park && L.park.dirty && !confirm("Unsaved changes in " + L.park.name + ". Switch park and lose them?")) { e.target.value = L.park.id; return; } L.pick = id; try { localStorage.setItem("parkday-admin-park", id); } catch (x) {} L.note = ""; openPark(id); };
+    $("#lall").onclick = () => { L.note = ""; L.err = ""; setupAll(); };
+    if (park) wirePark();
+    else if (!L.busy) { const ids = parkIds(); const want = (L.pick && ids.includes(L.pick)) ? L.pick : (ids.find(id => savedPark(id)) || ids[0]); if (want && L.autoFor !== want) { L.autoFor = want; L.pick = want; openPark(want); } else if (want) $("#loc").insertAdjacentHTML("beforeend", `<p class="small">Couldn't load this park. <button class="ghost small" id="pretry">Try again</button></p>`), $("#pretry").onclick = () => { L.autoFor = null; L.err = ""; renderLoc(); }; }
+  }
+  $("#lref").onclick = async () => { L.note = ""; await locLoad(); renderLoc(); };
+  $("#ltest").onclick = async () => { try { await api("/api/location/testmode", { method: "PUT", body: JSON.stringify({ on: !i.test }) }); L.note = i.test ? "Test mode off." : "Test mode on for 3 hours."; } catch (e) { L.err = e.message; } await locLoad(); renderLoc(); };
+  if ($("#lcfg")) $("#lcfg").onsubmit = async e => {
+    e.preventDefault(); const f = new FormData(e.target), o = {};
+    for (const k of ["scene", "vscene", "fallback"]) o[k] = f.get(k);
+    for (const k of ["closeM", "dwellS", "landM", "delayS"]) o[k] = Number(f.get(k));
+    o.showRide = !!f.get("showRide");
+    try { await api("/api/location/config", { method: "PUT", body: JSON.stringify(o) }); L.note = "Settings saved."; } catch (x) { L.err = x.message; }
+    await locLoad(); renderLoc();
+  };
+  if ($("#lkey")) $("#lkey").onclick = async () => { const b = $("#lkey"); if (L.info.keySet && !b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again: the old key stops working"; return; } try { L.newKey = (await api("/api/location/key", { method: "POST" })).key; } catch (e) { L.err = e.message; } await locLoad(); renderLoc(); };
+  if (L.newKey && $("#kcopy")) { $("#kcopy").onclick = () => navigator.clipboard.writeText(L.newKey).then(() => { $("#kcopy").textContent = "Copied"; }).catch(() => {}); $("#khide").onclick = () => { L.newKey = ""; renderLoc(); }; }
+}
+// park map: a real map (OpenStreetMap streets or Esri satellite) with every spot as a coloured dot. Leaflet is served from /vendor/leaflet.
+const landColor = (p, land) => land && land !== "-" ? COLORS[p.lands.indexOf(land) % COLORS.length] : land === "-" ? "#33475a" : "#9FC4CF";
+// ride outlines: built-in (OpenStreetMap, rides.js on the server) with the owner's own on top (p.shapes: corners, "circle" or "omit")
+let BUILTIN = null;
+async function loadBuiltin() { if (!BUILTIN) BUILTIN = await api("/api/location/shapes"); return BUILTIN; }
+function shapeOf(p, id) {
+  const own = (p.shapes || {})[id], b = BUILTIN || { shapes: {}, omit: [] };
+  if (Array.isArray(own)) return { kind: "yours", poly: own };
+  if (own === "circle") return { kind: "circle" };
+  if (own === "omit") return { kind: "omit" };
+  if (b.omit.includes(id)) return { kind: "omit", builtin: true };
+  if (b.shapes[id]) return { kind: "map", poly: b.shapes[id] };
+  return { kind: "circle", builtin: true };
+}
+// outline colours by kind (map data); yours are green, the picked one yellow
+const OCOL = { A: "#1FB8B4", S: "#60A5FA", R: "#F59E0B", H: "#C084FC", P: "#9FC4CF", O: "#2E6FD8", T: "#FF4F9A", B: "#22D3EE", U: "#A3E635" };
+const SHAPE_L = { yours: "your outline", map: "map outline", circle: "25 m circle only", omit: "left out (never Near)" };
+const allSpots = p => [...p.spots.map(s => ({ ...s, land: p.assign[s.id] })), ...p.custom.map(c => ({ ...c, t: "C" }))];
+const MAP = { el: null, map: null, dots: null, parkId: null, base: (() => { try { return localStorage.getItem("parkday-admin-map") || "map"; } catch (x) { return "map"; } })() };
+function mountMap(p) {
+  const LF = window.L, slot = $("#mapslot"); if (!slot) return;
+  if (!LF || !LF.map) { slot.innerHTML = `<p class="err small" style="padding:12px">The map didn't load. Refresh the page.</p>`; return; }
+  if (!MAP.map) {
+    MAP.el = document.createElement("div"); MAP.el.id = "lmap"; slot.appendChild(MAP.el);
+    MAP.map = LF.map(MAP.el, { maxZoom: 20, zoomSnap: 0.5 });
+    const streets = LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, attribution: "&copy; OpenStreetMap contributors" });
+    const sat = LF.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, maxNativeZoom: 19, attribution: "Imagery &copy; Esri" });
+    (MAP.base === "sat" ? sat : streets).addTo(MAP.map);
+    LF.control.layers({ "Map": streets, "Satellite": sat }, null, { collapsed: false, position: "topright" }).addTo(MAP.map);
+    MAP.map.on("baselayerchange", e => { MAP.base = e.name === "Satellite" ? "sat" : "map"; try { localStorage.setItem("parkday-admin-map", MAP.base); } catch (x) {} });
+    MAP.shapes = LF.layerGroup().addTo(MAP.map);
+    MAP.dots = LF.layerGroup().addTo(MAP.map);
+    MAP.map.on("click", e => L.tap && L.tap({ lat: e.latlng.lat, lon: e.latlng.lng }, null));
+    MAP.map.on("zoomend", drawSpots);
+  } else slot.appendChild(MAP.el);
+  MAP.el.classList.toggle("tap-any", L.mode === "test" || L.mode === "pin" || (L.mode === "outline" && !!L.draw));
+  MAP.map.invalidateSize();
+  if (MAP.parkId !== p.id) {
+    MAP.parkId = p.id;
+    const pts = (p.resort ? outlineSpots(p) : allSpots(p)).map(s => [s.lat, s.lon]);
+    if (pts.length) MAP.map.fitBounds(pts, { padding: [24, 24], maxZoom: 18 }); else MAP.map.setView([28.4, -81.5], 12);
+  }
+  drawSpots();
+}
+function drawSpots() {
+  const LF = window.L, p = L.park; if (!p || !MAP.map) return;
+  MAP.dots.clearLayers(); MAP.shapes.clearLayers();
+  const z = MAP.map.getZoom();
+  // section outlines (map data matched to her section names): a thin coloured edge, so every zone is visible in every mode
+  const nl = x => String(x).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  for (const a of (((BUILTIN && BUILTIN.landAreas) || {})[p.id] || [])) {
+    const land = (p.lands || []).find(l => nl(l) === nl(a.n)); if (!land) continue;
+    LF.polygon(a.p, { color: landColor(p, land), weight: 2, opacity: 0.9, fillOpacity: 0.07, interactive: false }).addTo(MAP.shapes);
+  }
+  if (L.mode === "outline") {
+    for (const s of outlineSpots(p)) {
+      if ((p.assign || {})[s.id] === "-" && L.oSel !== s.id) continue;   // hidden (closed or listed twice): no outline
+      const sh = shapeOf(p, s.id), sel = L.oSel === s.id;
+      if (sh.poly && !(sel && L.draw)) LF.polygon(sh.poly, { color: sel ? "#FFD166" : sh.kind === "yours" ? "#7CFC9A" : (OCOL[s.t] || "#1FB8B4"), weight: sel ? 4 : 2, opacity: sel ? 1 : 0.85, fillOpacity: sel ? 0.18 : 0.06, dashArray: sh.kind === "map" && s.t !== "A" ? "5 4" : null, interactive: false }).addTo(MAP.shapes);
+      if (sel && sh.kind === "circle") LF.circle([s.lat, s.lon], { radius: 25, color: "#FFD166", weight: 3, dashArray: "6 6", fillOpacity: 0.1, interactive: false }).addTo(MAP.shapes);
+    }
+    // shops, food carts and other places from the map data: small dots you can tap to pick
+    if (p.resort) for (const l of (BUILTIN && BUILTIN.lines) || []) LF.polyline(l.p, { color: l.n === "Monorail" ? "#FF4F9A" : l.n === "Skyliner" ? "#FFD166" : /Boat|Ferry|Taxi/.test(l.n) ? "#22D3EE" : "#E5E7EB", weight: 3, opacity: 0.8, dashArray: /Boat|Ferry|Taxi/.test(l.n) ? "6 6" : null, interactive: false }).bindTooltip(esc(l.n), { sticky: true }).addTo(MAP.shapes);
+    for (const x of p.resort ? outlineSpots(p) : (((BUILTIN && BUILTIN.extras) || {})[p.id] || []).filter(x => (p.assign || {})[x.id] !== "-")) {
+      const m = LF.circleMarker([x.lat, x.lon], { radius: L.oSel === x.id ? 8 : 5, color: "#0B1E2E", weight: 2, fillColor: OCOL[x.t] || "#9FC4CF", fillOpacity: 0.95 });
+      m.bindTooltip(esc(x.n), { direction: "top", offset: [0, -6], className: "splabel", permanent: L.oSel === x.id || MAP.map.getZoom() >= 19 });
+      m.on("click", e => { LF.DomEvent.stopPropagation(e); L.tap && L.tap({ lat: e.latlng.lat, lon: e.latlng.lng }, x.id); });
+      m.addTo(MAP.shapes);
+    }
+    if (L.draw) {
+      if (L.draw.length) LF.polyline(L.draw.length > 2 ? [...L.draw, L.draw[0]] : L.draw, { color: "#FF4F9A", weight: 4, dashArray: L.draw.length > 2 ? null : "4 6", interactive: false }).addTo(MAP.shapes);
+      L.draw.forEach((q, i) => {
+        const mk = LF.marker(q, { draggable: true, icon: LF.divIcon({ className: "ocorner", iconSize: [22, 22] }), title: "Drag to move. Tap to remove." }).addTo(MAP.shapes);
+        mk.on("dragend", () => { const ll = mk.getLatLng(); drawStep(d => { d[i] = [ll.lat, ll.lng]; }); });
+        mk.on("click", e => { LF.DomEvent.stopPropagation(e); drawStep(d => { d.splice(i, 1); }); });
+      });
+    }
+  }
+  for (const s of allSpots(p)) {
+    const sel = L.sel === s.id;
+    const m = LF.circleMarker([s.lat, s.lon], { radius: s.t === "C" ? 10 : s.t === "A" ? 9 : 7, color: sel ? "#fff" : "#0B1E2E", weight: sel ? 4 : 2, fillColor: landColor(p, s.land), fillOpacity: 0.95, className: "sp" });
+    // names: always for the selected dot, rides and own spots from zoom 18, everything from zoom 19
+    m.bindTooltip(esc(s.n) + (s.land && s.land !== "-" ? ` <span style="opacity:.6">· ${esc(s.land)}</span>` : ""), { permanent: sel || (z >= 18 && s.t !== "R" && s.t !== "S") || z >= 19, direction: "top", offset: [0, -8], className: "splabel" });
+    m.on("click", e => { LF.DomEvent.stopPropagation(e); L.tap && L.tap({ lat: e.latlng.lat, lon: e.latlng.lng }, s.id); });
+    m.addTo(MAP.dots);
+  }
+  if (L.test && L.test.at) LF.circleMarker([L.test.at.lat, L.test.at.lon], { radius: 11, color: "#FF4F9A", weight: 5, fillColor: "#fff", fillOpacity: 1, className: "test", interactive: false }).addTo(MAP.dots);
+}
+// one change to the outline being drawn: keep an undo copy, then redraw the map and the panel without rebuilding the page
+// fewer corners to drag: drop the corner that changes the shape least, until at most max are left (or every corner matters)
+function fewCorners(pts, max) {
+  const k = Math.cos(pts[0][0] * Math.PI / 180) * 111320, m = 110540;
+  const area = (a, b, c) => Math.abs((b[1] - a[1]) * k * (c[0] - a[0]) * m - (c[1] - a[1]) * k * (b[0] - a[0]) * m) / 2;
+  while (pts.length > max) {
+    let bi = -1, ba = Infinity;
+    for (let i = 0; i < pts.length; i++) { const v = area(pts[(i - 1 + pts.length) % pts.length], pts[i], pts[(i + 1) % pts.length]); if (v < ba) { ba = v; bi = i; } }
+    if (ba > 400) break;
+    pts.splice(bi, 1);
+  }
+  return pts;
+}
+function drawStep(fn) {
+  L.drawHist = L.drawHist || []; L.drawHist.push(L.draw.map(q => q.slice()));
+  fn(L.draw); refreshDraw();
+}
+function refreshDraw() {
+  drawSpots();
+  const box = document.querySelector(".ocard");
+  if (box && L.park) { box.outerHTML = outlinePanel(L.park); bindOutline(L.park); }
+}
+// a new corner goes into the nearest side of the outline (adjusting), or at the end (drawing from scratch)
+function addCorner(at) {
+  const q = [at.lat, at.lon], d = L.draw;
+  if (!L.adjust || d.length < 3) return drawStep(x => { x.push(q); });
+  const k = Math.cos(at.lat * Math.PI / 180), dd = (a, b) => Math.hypot((a[0] - b[0]), (a[1] - b[1]) * k);
+  let best = 0, cost = Infinity;
+  for (let i = 0; i < d.length; i++) { const a = d[i], b = d[(i + 1) % d.length], c = dd(a, q) + dd(q, b) - dd(a, b); if (c < cost) { cost = c; best = i + 1; } }
+  drawStep(x => { x.splice(best, 0, q); });
+}
+// the park's ThemeParks.wiki spots plus the built-in shops, food carts and other guest places (extras.js on the server)
+const OUT_T = { hotel: "O", monorail: "T", train: "T", skyliner: "T", boat: "B", bus: "U", area: "P" };
+const resortPlaces = p => (((BUILTIN && BUILTIN.places) || []).filter(x => x.r === RESORT_NAME[p.id]).map(x => ({ id: x.id, n: x.n, t: OUT_T[x.k] || "P", lat: x.lat, lon: x.lon })));
+const outlineSpots = p => p.resort ? [...resortPlaces(p), ...(p.custom || []).map(c => ({ ...c, n: c.n + " (yours)", t: c.t || "P" }))] : [...p.spots, ...(((BUILTIN && BUILTIN.extras) || {})[p.id] || []), ...(p.custom || []).map(c => ({ ...c, n: c.n + " (yours)", t: c.t || "C" }))];
+const KINDS = [["A", "Ride"], ["S", "Show"], ["R", "Food"], ["H", "Shop"], ["P", "Other place"]];
+const OUT_KINDS = [["O", "Hotel"], ["T", "Station"], ["B", "Boat dock"], ["U", "Bus station"], ["P", "Other place"]];
+const kindsFor = p => p && p.resort ? OUT_KINDS : KINDS;
+function outlinePanel(p) {
+  const rides = outlineSpots(p).slice().sort((a, b) => a.n.localeCompare(b.n));
+  const sel = rides.find(s => s.id === L.oSel), sh = sel ? shapeOf(p, sel.id) : null, own = sel ? (p.custom || []).find(c => c.id === sel.id) : null;
+  const order = { circle: 0, map: 1, yours: 2, omit: 3 };
+  return `<div class="ocard">
+    <select id="osel"><option value="">${p.resort ? "Pick a hotel, station or dock (or tap its outline)" : "Pick a ride, show or restaurant (or tap its dot)"}</option>${(p.resort ? [["O", "Hotels"], ["T", "Stations (monorail, Skyliner, train)"], ["B", "Boat docks"], ["U", "Bus stations"], ["P", "Other places"], ["C", "Your own spots"]] : [["A", "Rides"], ["S", "Shows"], ["R", "Food and drink"], ["H", "Shops"], ["P", "Other places"], ["C", "Your own spots"]]).map(([t, g]) => `<optgroup label="${g}">${rides.filter(s => s.t === t).map(s => { const k = shapeOf(p, s.id).kind; return `<option value="${esc(s.id)}" ${L.oSel === s.id ? "selected" : ""}>${esc(s.n)} · ${SHAPE_L[k]}</option>`; }).join("")}</optgroup>`).join("")}</select>
+    ${sel ? (L.draw ? `<div class="ostat">${L.adjust ? "Adjusting" : "Drawing"} <b>${esc(sel.n)}</b> (${L.draw.length} corners). ${L.adjust ? "Drag a pink corner to move it, tap a corner to remove it, tap the map to add one." : "Tap the corners of the building, queue and entrance on the map. Drag a corner to move it, tap it to remove it."}</div>
+      <div class="orow"><button class="small ghost" id="oundo" ${(L.drawHist || []).length ? "" : "disabled"}>↶ Undo</button><button class="small sun" id="odone" ${L.draw.length > 2 ? "" : "disabled"}>✓ Done</button><button class="small danger push" id="ocancel">✕ Cancel, keep the old outline</button></div>`
+      : `${own ? `<div class="orow"><span class="small dim">Your spot is a:</span>${kindsFor(p).map(([k, l]) => `<button class="small ${own.t === k ? "sun" : "ghost"}" data-ok="${k}">${l}</button>`).join("")}<button class="small danger push" id="odelc">Remove this spot</button></div>` : ""}<div class="ostat">Now: <b>${SHAPE_L[sh.kind]}</b>${sh.kind === "map" ? " (from OpenStreetMap)" : ""}. Close = inside the outline or within ${(BUILTIN && BUILTIN.margin) || 15} m of it, or 25 m from the dot.</div>
+      <div class="orow">${sh.poly ? `<button class="small sun" id="oadjust">✋ Adjust corners</button>` : ""}<button class="small ${sh.poly ? "ghost" : "sun"}" id="odraw">✏️ Draw from scratch</button><button class="small ghost" id="ocircle">Use 25 m circle only</button><button class="small ghost" id="oomit">Leave out</button>${(p.shapes || {})[sel.id] !== undefined ? `<button class="small ghost" id="oreset">↺ Back to map data</button>` : ""}</div>`)
+      : `<p class="small dim">Outline colours: <b style="color:#1FB8B4">rides</b>, <b style="color:#60A5FA">shows</b>, <b style="color:#F59E0B">food</b>, <b style="color:#C084FC">shops</b>, <b style="color:#9FC4CF">other places</b> (dashed = not a ride), <b style="color:#7CFC9A">green = yours</b>, <b style="color:#FFD166">yellow = the one you picked</b>. Where outlines overlap, a ride you are in wins, then the smallest outline you are inside. Tap Save when done.</p>`}
+  </div>`;
+}
+function bindOutline(p) {
+  const touch = () => { p.dirty = true; };
+  const start = (pts, adjust) => { L.draw = pts; L.adjust = adjust; L.drawHist = []; refreshDraw(); };
+  const stop = () => { L.draw = null; L.adjust = false; L.drawHist = []; };
+  if ($("#osel")) $("#osel").onchange = e => { L.oSel = e.target.value || null; stop(); renderLoc(); if (L.oSel && L.zoomTo) L.zoomTo(L.oSel); };
+  if ($("#odraw")) $("#odraw").onclick = () => start([], false);
+  if ($("#oadjust")) $("#oadjust").onclick = () => start(fewCorners(shapeOf(p, L.oSel).poly.map(q => q.slice()), 12), true);
+  if ($("#oundo")) $("#oundo").onclick = () => { if ((L.drawHist || []).length) { L.draw = L.drawHist.pop(); refreshDraw(); } };
+  if ($("#ocancel")) $("#ocancel").onclick = () => { stop(); renderLoc(); };
+  if ($("#odone")) $("#odone").onclick = () => { p.shapes[L.oSel] = L.draw.map(([a, b]) => [+a.toFixed(6), +b.toFixed(6)]); stop(); touch(); L.note = "Outline changed. Tap Save to keep it, or Throw away changes."; renderLoc(); };
+  if ($("#ocircle")) $("#ocircle").onclick = () => { p.shapes[L.oSel] = "circle"; touch(); renderLoc(); };
+  if ($("#oomit")) $("#oomit").onclick = () => { p.shapes[L.oSel] = "omit"; touch(); renderLoc(); };
+  if ($("#oreset")) $("#oreset").onclick = () => { delete p.shapes[L.oSel]; touch(); renderLoc(); };
+  document.querySelectorAll("[data-ok]").forEach(b => b.onclick = () => { const c = (p.custom || []).find(x => x.id === L.oSel); if (c) { c.t = b.dataset.ok; touch(); renderLoc(); } });
+  if ($("#odelc")) $("#odelc").onclick = () => { const b = $("#odelc"); if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to remove"; return; } p.custom = (p.custom || []).filter(x => x.id !== L.oSel); delete p.shapes[L.oSel]; L.oSel = null; touch(); renderLoc(); };
+}
+function parkEditor(p) {
+  const all = allSpots(p);
+  const f = (L.filter || "").toLowerCase();
+  const rows = all.filter(s => !f || s.n.toLowerCase().includes(f) || String(s.land || "").toLowerCase().includes(f)).sort((a, b) => a.n.localeCompare(b.n));
+  const opts = sel => `<option value="" ${!sel ? "selected" : ""}>(no land)</option>${p.lands.map(l => `<option ${sel === l ? "selected" : ""}>${esc(l)}</option>`).join("")}<option value="-" ${sel === "-" ? "selected" : ""}>(ignore)</option>`;
+  const untagged = p.spots.filter(s => !p.assign[s.id]).length;
+  const t = L.test;
+  return `
+    <h2 style="margin:12px 0 4px">${esc(p.name)}</h2>
+    ${p.fresh ? `<p class="warn small">Not saved yet: these are suggestions. Check them, then Save.</p>` : ""}${p.dirty ? `<p class="warn small">Unsaved changes.</p>` : ""}
+    ${p.resort ? `<p class="small dim">Hotels, monorail, Skyliner and train stations, boat docks and bus stations outside the parks. Lines on the map: pink monorail, yellow Skyliner, dashed blue boats. Pick a place to adjust its outline, or add your own with 📍 Add a location.</p>` : `    <div class="card"><b>Lands</b> <span class="small dim">${p.spots.length} spots, ${untagged} without a land</span>
+      <div class="lands" style="margin:8px 0">${p.lands.map((l, i) => `<span class="ld" style="background:${COLORS[i % COLORS.length]}">${esc(l)}<button data-ren="${i}" title="Rename">✎</button><button data-del="${i}" title="Remove">✕</button></span>`).join("") || `<span class="dim small">No lands yet. Add the park's lands or sections.</span>`}</div>
+      <form id="addland" class="row"><input id="newland" placeholder="New land or section" maxlength="60"><button class="small">Add</button></form></div>`}
+    <div class="card">
+      <div class="modes">${(p.resort ? [["outline", "📐 Outlines"], ["pin", "📍 Add a location"], ["test", "🧪 Test a spot"]] : [["pick", "🔎 Find"], ["paint", "🏷️ Tag land"], ["pin", "📍 Add a location"], ["outline", "📐 Ride outlines"], ["test", "🧪 Test a spot"]]).map(([k, l]) => `<button class="${L.mode === k ? "on" : ""}" data-mode="${k}">${l}</button>`).join("")}</div>
+      ${L.mode === "paint" || L.mode === "pin" ? `<div class="paintl"><span class="small dim">${L.mode === "pin" ? "Its land:" : "Tag as:"}</span>${p.lands.map((l, i) => `<button class="${L.paint === l ? "on" : ""}" data-l="${esc(l)}" style="--c:${COLORS[i % COLORS.length]}">${esc(l)}</button>`).join("")}${L.mode === "paint" ? `<button class="${L.paint === "-" ? "on" : ""}" data-l="-" style="--c:#33475a">Ignore</button><button class="${L.paint === "" ? "on" : ""}" data-l="" style="--c:#9FC4CF">No land</button>` : `<button class="${!L.paint || L.paint === "-" ? "on" : ""}" data-l="" style="--c:#9FC4CF">No land</button>`}</div>` : ""}
+      ${L.mode === "outline" ? outlinePanel(p) : ""}
+      ${L.mode === "pin" ? `<div class="row" style="margin-top:6px"><input id="pinname" placeholder="Name of the location (e.g. Liberty Square Market)" maxlength="80"></div>
+      <div class="orow" style="margin-top:6px"><span class="small dim">It is a:</span>${kindsFor(p).map(([k, l]) => `<button class="small ${(L.pinType || (p.resort ? "P" : "R")) === k ? "sun" : "ghost"}" data-pk="${k}">${l}</button>`).join("")}</div>
+      <p class="small dim">Then tap its spot on the map. You can draw its outline right after.</p>` : ""}
+      ${t ? `<p class="small" style="margin:8px 0">Scene would say: <b>${esc(t.show ? (t.show.outside ? "(outside the parks)" : [t.show.ride, t.show.land, t.show.park].filter(Boolean).join(" · ")) : "?")}</b>${t.check && t.check.nearby ? ` <span class="dim">· nearest: ${t.check.nearby.slice(0, 3).map(x => esc(x.n) + " " + x.d + " m").join(", ")}</span>` : ""}${p.dirty || p.fresh ? ` <span class="warn">(uses the saved version: save first)</span>` : ""}</p>` : ""}
+      <div class="mapwrap" id="mapslot"></div>
+      <p class="small dim maphint">${{ outline: "Pick a ride above or tap its dot. Draw: tap each corner of the building, queue and entrance, then Done. Switch to Satellite (top right) to see the buildings.", pick: "Tap a dot to find it in the list. Pinch or use + and − to zoom; names show when you zoom in.", paint: "Pick a land above, then tap dots on the map to tag them. Tap Save when done.", test: L.info && L.info.test ? "Test mode is on: tap anywhere to pretend you're there. The OBS location card shows it (tagged TEST) while OBS is not streaming." : "Tap where you would be standing to see what the scene would say. Start test mode first to also see it on the OBS card.", pin: "Type a name, pick its land, then tap the spot on the map. Tap Save when done." }[L.mode] || ""}</p>
+      <div class="savebar ${p.dirty || p.fresh ? "need" : ""}"><span class="small">${p.dirty ? "Unsaved changes" : p.fresh ? "Not saved yet: suggestions" : "Saved"}</span>${p.dirty ? `<button class="ghost small" id="pdiscard">Throw away changes</button>` : ""}<button class="ghost small" id="phist">🕘 History</button><button class="sun" id="psave">Save ${esc(p.name)}</button></div>
+      ${L.hist && L.hist.id === p.id ? histPanel(p) : ""}
+      <div class="legend" style="margin-top:6px">${p.lands.map((l, i) => `<span><i style="background:${COLORS[i % COLORS.length]}"></i>${esc(l)}</span>`).join("")}<span><i style="background:#9FC4CF"></i>no land</span><span><i style="background:#33475a"></i>ignored</span></div></div>
+    ${p.resort ? "" : `    <div class="card"><div class="row"><input id="sfilter" placeholder="Find a spot or land" value="${esc(L.filter || "")}"></div>
+      <div class="spots" style="margin-top:8px"><table><tr><th>Spot</th><th>Type</th><th>Land</th></tr>
+      ${rows.map(s => `<tr class="${L.sel === s.id ? "sel" : ""}" id="r-${esc(s.id)}"><td>${esc(s.n)}${s.t === "C" ? ` <button class="ghost small" data-delc="${esc(s.id)}">Remove</button>` : ""}</td><td class="dim">${TYPE_L[s.t]}</td><td><select data-as="${esc(s.id)}" data-c="${s.t === "C" ? 1 : ""}">${opts(s.land)}</select></td></tr>`).join("")}</table></div></div>
+    <div class="row">${String(p.id).startsWith("district-") ? `<span class="small dim">A shopping district: its spots come from the map, not the park app.</span>` : `<button class="ghost" id="prefresh">Refresh rides from park data</button>`}${p.fresh ? "" : `<button class="danger" id="premove">Remove park</button>`}</div>`}`;
+}
+const histWhen = t => new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+function histPanel(p) {
+  const h = L.hist, c = x => `${x.tagged} of ${x.spots} tagged · ${x.outlines} outline${x.outlines === 1 ? "" : "s"} · ${x.own} own spot${x.own === 1 ? "" : "s"} · ${x.lands} lands`;
+  return `<div class="card" id="phpanel" style="margin-top:8px"><b>Earlier copies of ${esc(p.name)}</b>
+    <p class="small dim">A copy is kept before each editing session (at most one per 10 minutes), before a park is removed, and before going back. The last 30 are kept. Going back brings back your outlines, lands, tags and own spots; the ride list stays current. What you have now is saved first, so you can undo it.</p>
+    ${h.now ? `<p class="small">Now: ${c(h.now)}</p>` : ""}
+    ${h.versions.length ? h.versions.map(x => `<div class="row" style="align-items:center"><span class="small"><b>${histWhen(x.at)}</b> · ${esc(x.why)}<br><span class="dim">${c(x)}</span></span><button class="ghost small push" data-goback="${esc(x.v)}">Go back to this</button></div>`).join("") : `<p class="small dim">No earlier copies yet. One is kept the next time this park changes.</p>`}
+    <div class="row"><button class="ghost small" id="phclose">Close</button></div></div>`;
+}
+function wirePark() {
+  const p = L.park;
+  const touch = () => { p.dirty = true; };
+  if ($("#addland")) $("#addland").onsubmit = e => { e.preventDefault(); const v = $("#newland").value.trim(); if (v && !p.lands.includes(v)) { p.lands.push(v); L.paint = v; touch(); } renderLoc(); };
+  document.querySelectorAll("[data-ren]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.ren, old = p.lands[i], v = (prompt("New name for " + old, old) || "").trim();
+    if (!v || p.lands.includes(v)) return;
+    p.lands[i] = v; for (const k in p.assign) if (p.assign[k] === old) p.assign[k] = v; for (const c of p.custom) if (c.land === old) c.land = v; touch(); renderLoc();
+  });
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.del, old = p.lands[i];
+    if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Sure?"; return; }
+    p.lands.splice(i, 1); for (const k in p.assign) if (p.assign[k] === old) delete p.assign[k]; for (const c of p.custom) if (c.land === old) c.land = null; touch(); renderLoc();
+  });
+  const zoomTo = id => { const s = outlineSpots(p).find(x => x.id === id), sh = s && shapeOf(p, id); if (!s || !MAP.map) return; if (sh.poly) MAP.map.fitBounds(sh.poly, { padding: [40, 40], maxZoom: 19 }); else MAP.map.setView([s.lat, s.lon], 19); };
+  L.zoomTo = zoomTo;
+  bindOutline(p);
+  document.querySelectorAll("[data-pk]").forEach(b => b.onclick = () => { const n = $("#pinname") ? $("#pinname").value : ""; L.pinType = b.dataset.pk; renderLoc(); if ($("#pinname")) $("#pinname").value = n; });
+  document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { L.draw = null; L.mode = b.dataset.mode; if (L.mode === "paint" && L.paint === undefined) L.paint = p.lands[0] || ""; renderLoc(); });
+  document.querySelectorAll(".paintl [data-l]").forEach(b => b.onclick = () => { const n = $("#pinname") ? $("#pinname").value : ""; L.paint = b.dataset.l; renderLoc(); if (n && $("#pinname")) $("#pinname").value = n; });
+  if ($("#sfilter")) $("#sfilter").oninput = e => { L.filter = e.target.value; const pos = e.target.selectionStart; renderLoc(); const n = $("#sfilter"); n.focus(); n.setSelectionRange(pos, pos); };
+  const setLand = (id, v, custom) => { if (custom) { const c = p.custom.find(x => x.id === id); if (c) c.land = v && v !== "-" ? v : null; } else if (v) p.assign[id] = v; else delete p.assign[id]; touch(); };
+  document.querySelectorAll("select[data-as]").forEach(s => s.onchange = () => { setLand(s.dataset.as, s.value, !!s.dataset.c); renderLoc(); });
+  document.querySelectorAll("[data-delc]").forEach(b => b.onclick = () => { p.custom = p.custom.filter(c => c.id !== b.dataset.delc); touch(); renderLoc(); });
+  L.tap = async (at, id) => {
+    if (L.mode === "pick") { if (!id) return; L.sel = id; L.filter = ""; renderLoc(); const row = document.getElementById("r-" + id); if (row) row.scrollIntoView({ block: "nearest" }); return; }
+    if (L.mode === "outline") {
+      if (L.draw) { if (L.draw.length >= 40) { L.err = "40 corners at most"; renderLoc(); return; } addCorner(at); return; }
+      if (id && outlineSpots(p).find(x => x.id === id)) { L.oSel = id; renderLoc(); }
+      return;
+    }
+    if (L.mode === "paint") { if (!id) return; setLand(id, L.paint, !!p.custom.find(c => c.id === id)); L.sel = id; renderLoc(); return; }
+    if (L.mode === "test") {
+      try {
+        const r2 = await api("/api/location/test", { method: "POST", body: JSON.stringify(at) }); L.test = { ...r2, at };
+        // test mode on: also "pretend I'm here", so the OBS location card shows it (while OBS is not streaming)
+        if (L.info && L.info.test) {
+          const r3 = await fetch("/api/location/phone", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + code }, body: JSON.stringify({ latitude: at.lat, longitude: at.lon, speed: 0, src: "map" }) });
+          if (r3.ok) L.note = "Sent to test mode: the OBS location card shows this (tagged TEST) while OBS is not streaming."; else L.err = "Test mode: " + ((await r3.json().catch(() => ({}))).error || "server said " + r3.status);
+          await locLoad();
+        } else L.note = "Preview only. Start test mode (top of this page) and tap again to see it on the OBS location card.";
+      } catch (er) { L.err = er.message; }
+      renderLoc(); return;
+    }
+    if (L.mode === "pin") { const n = ($("#pinname").value || "").trim(); if (!n) { $("#pinname").focus(); $("#pinname").placeholder = "Type a name first, then tap the map"; return; } const nid = "c" + Math.random().toString(36).slice(2, 9); p.custom.push({ id: nid, n, t: L.pinType || (p.resort ? "P" : "R"), lat: +at.lat.toFixed(6), lon: +at.lon.toFixed(6), land: L.paint && L.paint !== "-" ? L.paint : null }); touch(); L.mode = "outline"; L.oSel = nid; L.draw = null; L.note = "Added " + n + ". Draw its outline now (✏️ Draw from scratch), or just tap Save to keep it as a spot."; renderLoc(); }
+  };
+  mountMap(p);
+  $("#psave").onclick = savePark;
+  // save history: earlier copies of this park, and going back to one (tap twice)
+  if ($("#phist")) $("#phist").onclick = async () => { if (L.hist && L.hist.id === p.id) { L.hist = null; renderLoc(); return; } try { L.hist = { id: p.id, ...(await api("/api/location/history?id=" + encodeURIComponent(p.id))) }; } catch (e) { L.err = e.message; } renderLoc(); };
+  if ($("#phclose")) $("#phclose").onclick = () => { L.hist = null; renderLoc(); };
+  document.querySelectorAll("[data-goback]").forEach(b => b.onclick = async () => {
+    if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to go back"; return; }
+    const when = histWhen(Number(b.dataset.goback));
+    try {
+      if (p.dirty && !p.fresh) await putPark(p);   // what is on screen is saved first, so it is in History too
+      await api("/api/location/restore?id=" + encodeURIComponent(p.id) + "&v=" + encodeURIComponent(b.dataset.goback), { method: "POST" });
+      dropDraft(p.id); L.hist = null; await openPark(p.id); await locLoad();
+      L.note = `Went back to the copy from ${when}. What you had before is now the first entry in History, so you can undo this.`;
+    } catch (e) { L.err = e.message; }
+    renderLoc();
+  });
+  if ($("#pdiscard")) $("#pdiscard").onclick = () => { const b = $("#pdiscard"); if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to throw away"; return; } p.dirty = false; L.draw = null; dropDraft(p.id); const keep = L.oSel, mode = L.mode; openPark(p.id).then(() => { L.oSel = keep; L.mode = mode; L.note = "Changes thrown away."; renderLoc(); }); };
+  if ($("#prefresh")) $("#prefresh").onclick = async () => {
+    L.busy = "Refreshing rides…"; renderLoc();
+    try { const f = await fetchSpots(p.id); const keep = new Set(f.spots.map(s => s.id)); p.spots = f.spots; for (const k of Object.keys(p.assign)) if (!keep.has(k)) delete p.assign[k];
+      const sug = ((await pf())[p.id] || {}).lands || {}, s2 = suggest(p.spots, sug); for (const s of p.spots) if (!p.assign[s.id] && s2[s.id] && p.lands.includes(s2[s.id])) p.assign[s.id] = s2[s.id]; touch(); L.note = "Rides refreshed. New spots got suggested lands."; }
+    catch (e) { L.err = e.message; }
+    L.busy = ""; renderLoc();
+  };
+  if ($("#premove")) $("#premove").onclick = async () => { const b = $("#premove"); if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to remove"; return; } try { await api("/api/location/park?id=" + encodeURIComponent(p.id), { method: "DELETE" }); } catch (e) { L.err = e.message; } L.park = null; await locLoad(); renderLoc(); };
+}
+
 code ? load() : login();
 </script>
 </body></html>

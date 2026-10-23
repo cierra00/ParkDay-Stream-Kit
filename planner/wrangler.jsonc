@@ -12,6 +12,7 @@
   "durable_objects": { "bindings": [{ "name": "HUB", "class_name": "LiveHub" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveHub"] }],
   "routes": [{ "pattern": "planner.cruiseandthemeparkguide.com", "custom_domain": true }],
-  "observability": { "enabled": true }
+  // request addresses are not logged: GPS (Moblin), live links and the OBS overlay carry their key in the address
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } }
   // Secrets (set with `wrangler secret put`): OWNER_PASS, OVERLAY_KEY, BOT_KEY
 }

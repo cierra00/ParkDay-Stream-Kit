@@ -1,0 +1,522 @@
+{
+ "_note": "Suggested lands, Oct 1 2026. Each land lists anchor spots (exact ThemeParks.wiki names). Every other spot gets the land of its nearest anchor. Only a starting point: check every park in the owner dashboard, Location tab.",
+ "75ea578a-adc8-4116-a54d-dccb60765ef9": {
+  "name": "Magic Kingdom",
+  "lands": {
+   "Main Street, U.S.A.": [
+    "Main Street Vehicles",
+    "Walt Disney World Railroad - Main Street, U.S.A.",
+    "The Crystal Palace",
+    "Casey's Corner"
+   ],
+   "Adventureland": [
+    "Jungle Cruise",
+    "Pirates of the Caribbean",
+    "Walt Disney's Enchanted Tiki Room",
+    "The Magic Carpets of Aladdin",
+    "Swiss Family Treehouse",
+    "A Pirate's Adventure ~ Treasures of the Seven Seas"
+   ],
+   "Frontierland": [
+    "Big Thunder Mountain Railroad",
+    "Tiana's Bayou Adventure",
+    "Country Bear Musical Jamboree",
+    "Pecos Bill Tall Tale Inn and Cafe"
+   ],
+   "Liberty Square": [
+    "Haunted Mansion",
+    "The Hall of Presidents"
+   ],
+   "Fantasyland": [
+    "Seven Dwarfs Mine Train",
+    "Peter Pan's Flight",
+    "\"it's a small world\"",
+    "Dumbo the Flying Elephant",
+    "The Barnstormer",
+    "Mad Tea Party",
+    "Under the Sea - Journey of The Little Mermaid",
+    "Enchanted Tales with Belle",
+    "Prince Charming Regal Carrousel",
+    "Mickey's PhilharMagic",
+    "The Many Adventures of Winnie the Pooh",
+    "Walt Disney World Railroad - Fantasyland"
+   ],
+   "Tomorrowland": [
+    "Space Mountain",
+    "TRON Lightcycle / Run",
+    "Buzz Lightyear’s Space Ranger Spin",
+    "Tomorrowland Speedway",
+    "Astro Orbiter",
+    "Tomorrowland Transit Authority PeopleMover",
+    "Walt Disney's Carousel of Progress",
+    "Monsters, Inc. Laugh Floor"
+   ]
+  }
+ },
+ "47f90d2c-e191-4239-a466-5892ef59a88b": {
+  "name": "EPCOT",
+  "lands": {
+   "World Celebration": [
+    "Spaceship Earth",
+    "Project Tomorrow: Inventing the Wonders of the Future",
+    "Journey Into Imagination With Figment",
+    "ImageWorks - The \"What If\" Labs",
+    "Disney and Pixar Short Film Festival",
+    "Connections Eatery"
+   ],
+   "World Discovery": [
+    "Test Track",
+    "Mission: SPACE",
+    "Guardians of the Galaxy: Cosmic Rewind",
+    "Space 220 Restaurant"
+   ],
+   "World Nature": [
+    "Soarin' Across America",
+    "Living with the Land",
+    "The Seas with Nemo & Friends",
+    "Turtle Talk With Crush",
+    "Journey of Water, Inspired by Moana",
+    "Awesome Planet",
+    "Coral Reef Restaurant",
+    "Garden Grill Restaurant"
+   ],
+   "Mexico": [
+    "Gran Fiesta Tour Starring The Three Caballeros",
+    "Mexico Folk Art Gallery",
+    "San Angel Inn Restaurante",
+    "La Hacienda de San Angel"
+   ],
+   "Norway": [
+    "Frozen Ever After",
+    "Stave Church Gallery",
+    "Akershus Royal Banquet Hall"
+   ],
+   "China": [
+    "Reflections of China",
+    "House of the Whispering Willows",
+    "Nine Dragons Restaurant"
+   ],
+   "Germany": [
+    "Biergarten Restaurant",
+    "Sommerfest",
+    "Karamell-Küche"
+   ],
+   "Italy": [
+    "Via Napoli Ristorante e Pizzeria",
+    "Tutto Italia Ristorante",
+    "Pizza al Taglio"
+   ],
+   "The American Adventure": [
+    "The American Adventure",
+    "American Heritage Gallery",
+    "Regal Eagle Smokehouse: Craft Drafts & Barbecue",
+    "Fife & Drum Tavern"
+   ],
+   "Japan": [
+    "Bijutsu-kan Gallery",
+    "Teppan Edo",
+    "Takumi-Tei",
+    "Shiki-Sai: Sushi Izakaya"
+   ],
+   "Morocco": [
+    "Gallery of Arts and History",
+    "Spice Road Table",
+    "Tangierine Café: Flavors of the Medina"
+   ],
+   "France": [
+    "Impressions de France",
+    "Remy's Ratatouille Adventure",
+    "Palais du Cinéma",
+    "Chefs de France",
+    "Monsieur Paul"
+   ],
+   "United Kingdom": [
+    "Rose & Crown Pub",
+    "Rose & Crown Dining Room",
+    "Yorkshire County Fish Shop"
+   ],
+   "Canada": [
+    "Canada Far and Wide in Circle-Vision 360",
+    "Le Cellier Steakhouse",
+    "La Poutinerie"
+   ]
+  }
+ },
+ "288747d1-8b4f-4a64-867e-ea7c9b27bad8": {
+  "name": "Hollywood Studios",
+  "lands": {
+   "Hollywood Boulevard": [
+    "Mickey & Minnie's Runaway Railway",
+    "The Hollywood Brown Derby",
+    "The Hollywood Brown Derby Lounge"
+   ],
+   "Sunset Boulevard": [
+    "The Twilight Zone™ Tower of Terror",
+    "Rock ’n’ Roller Coaster Starring The Muppets"
+   ],
+   "Toy Story Land": [
+    "Slinky Dog Dash",
+    "Alien Swirling Saucers",
+    "Toy Story Mania!"
+   ],
+   "Star Wars: Galaxy's Edge": [
+    "Millennium Falcon: Smugglers Run",
+    "Star Wars: Rise of the Resistance"
+   ],
+   "Echo Lake": [
+    "Star Tours – The Adventures Continue",
+    "50's Prime Time Café"
+   ],
+   "Grand Avenue": [
+    "Vacation Fun - An Original Animated Short with Mickey & Minnie"
+   ],
+   "Animation Courtyard": [
+    "Walt Disney Presents"
+   ],
+   "Commissary Lane": [
+    "ABC Commissary",
+    "Sci-Fi Dine-In Theater Restaurant"
+   ]
+  }
+ },
+ "1c84a229-8862-4648-9c71-378ddd2c7693": {
+  "name": "Animal Kingdom",
+  "lands": {
+   "Oasis": [
+    "The Oasis Exhibits"
+   ],
+   "Discovery Island": [
+    "Tree of Life",
+    "Discovery Island Trails",
+    "Zootopia: Better Zoogether!"
+   ],
+   "Pandora - The World of Avatar": [
+    "Avatar Flight of Passage",
+    "Na'vi River Journey"
+   ],
+   "Africa": [
+    "Kilimanjaro Safaris",
+    "Gorilla Falls Exploration Trail",
+    "Wildlife Express Train"
+   ],
+   "Rafiki's Planet Watch": [
+    "Animal Care at Conservation Station",
+    "Bluey's Wild World at Conservation Station"
+   ],
+   "Asia": [
+    "Expedition Everest - Legend of the Forbidden Mountain",
+    "Kali River Rapids",
+    "Maharajah Jungle Trek"
+   ]
+  }
+ },
+ "7340550b-c14d-4def-80bb-acdb51d49a66": {
+  "name": "Disneyland",
+  "lands": {
+   "Main Street, U.S.A.": [
+    "Main Street Vehicles",
+    "Main Street Cinema",
+    "Opera House - Walt Disney - A Magical Life",
+    "The Disney Gallery",
+    "Plaza Inn"
+   ],
+   "Adventureland": [
+    "Jungle Cruise",
+    "Indiana Jones™ Adventure",
+    "Walt Disney's Enchanted Tiki Room",
+    "Adventureland Treehouse inspired by Walt Disney’s Swiss Family Robinson"
+   ],
+   "New Orleans Square": [
+    "Pirates of the Caribbean",
+    "Haunted Mansion Holiday"
+   ],
+   "Bayou Country": [
+    "Tiana's Bayou Adventure",
+    "Davy Crockett's Explorer Canoes",
+    "The Many Adventures of Winnie the Pooh"
+   ],
+   "Frontierland": [
+    "Big Thunder Mountain Railroad",
+    "Mark Twain Riverboat",
+    "Frontierland Shootin' Exposition",
+    "Pirate's Lair on Tom Sawyer Island"
+   ],
+   "Star Wars: Galaxy's Edge": [
+    "Millennium Falcon: Smugglers Run",
+    "Star Wars: Rise of the Resistance"
+   ],
+   "Fantasyland": [
+    "Peter Pan's Flight",
+    "Mr. Toad's Wild Ride",
+    "Alice in Wonderland",
+    "Matterhorn Bobsleds",
+    "\"it's a small world\"",
+    "Dumbo the Flying Elephant",
+    "Mad Tea Party",
+    "King Arthur Carrousel",
+    "Casey Jr. Circus Train",
+    "Storybook Land Canal Boats",
+    "Pinocchio's Daring Journey",
+    "Snow White's Enchanted Wish",
+    "Sleeping Beauty Castle Walkthrough"
+   ],
+   "Mickey's Toontown": [
+    "Mickey & Minnie's Runaway Railway",
+    "Roger Rabbit's Car Toon Spin",
+    "Chip 'n' Dale's GADGETcoaster",
+    "Minnie's House",
+    "Donald's Duck Pond",
+    "Goofy's How-to-Play Yard"
+   ],
+   "Tomorrowland": [
+    "Space Mountain",
+    "Star Tours - The Adventures Continue",
+    "Buzz Lightyear Astro Blasters",
+    "Autopia",
+    "Finding Nemo Submarine Voyage",
+    "Astro Orbitor"
+   ]
+  }
+ },
+ "832fcd51-ea19-4e77-85c7-75d5843b127c": {
+  "name": "Disney California Adventure",
+  "lands": {
+   "Buena Vista Street": [
+    "Carthay Circle Restaurant",
+    "Carthay Circle Lounge"
+   ],
+   "Hollywood Land": [
+    "Monsters, Inc. Mike & Sulley to the Rescue!",
+    "Mickey's PhilharMagic",
+    "Animation Academy",
+    "Sorcerer's Workshop",
+    "Turtle Talk with Crush"
+   ],
+   "Avengers Campus": [
+    "WEB SLINGERS: A Spider-Man Adventure",
+    "Guardians of the Galaxy - Mission: BREAKOUT!",
+    "Pym Test Kitchen"
+   ],
+   "Cars Land": [
+    "Radiator Springs Racers",
+    "Luigi's Honkin' Haul-O-Ween",
+    "Mater's Graveyard JamBOOree",
+    "Flo's V8 Cafe"
+   ],
+   "Pixar Pier": [
+    "Incredicoaster",
+    "Toy Story Midway Mania!",
+    "Pixar Pal-A-Round - Swinging",
+    "Inside Out Emotional Whirlwind",
+    "Jessie's Critter Carousel",
+    "Games of Pixar Pier",
+    "Lamplight Lounge"
+   ],
+   "Paradise Gardens Park": [
+    "Silly Symphony Swings",
+    "Golden Zephyr",
+    "Goofy's Sky School",
+    "Jumpin' Jellyfish",
+    "The Little Mermaid - Ariel's Undersea Adventure",
+    "Paradise Garden Grill"
+   ],
+   "Grizzly Peak": [
+    "Grizzly River Run",
+    "Soarin’ Across America",
+    "Redwood Creek Challenge Trail",
+    "Smokejumpers Grill"
+   ],
+   "San Fransokyo Square": [
+    "The Bakery Tour",
+    "Aunt Cass Café",
+    "Lucky Fortune Cookery"
+   ]
+  }
+ },
+ "eb3f4560-2383-4a36-9152-6b3e5ed6bc57": {
+  "name": "Universal Studios Florida",
+  "lands": {
+   "Minion Land": [
+    "Despicable Me Minion Mayhem™",
+    "Illumination's Villain-Con Minion Blast",
+    "Illumination’s Minion Cafe"
+   ],
+   "Production Central": [
+    "TRANSFORMERS™: The Ride-3D"
+   ],
+   "New York": [
+    "Revenge of the Mummy",
+    "Race Through New York Starring Jimmy Fallon",
+    "Louie's Italian Restaurant™",
+    "Finnegan's Bar and Grill™",
+    "TODAY Cafe"
+   ],
+   "San Francisco": [
+    "San Francisco Pastry Company™",
+    "Lombard's Seafood Grille™"
+   ],
+   "Diagon Alley": [
+    "Harry Potter and the Escape from Gringotts™",
+    "Hogwarts Express™ - King's Cross Station",
+    "Leaky Cauldron™"
+   ],
+   "World Expo": [
+    "MEN IN BLACK™ Alien Attack!"
+   ],
+   "Springfield": [
+    "The Simpsons Ride™",
+    "Kang & Kodos' Twirl 'n' Hurl",
+    "Krusty Burger",
+    "Moe's Tavern"
+   ],
+   "DreamWorks Land": [
+    "Trolls Trollercoaster",
+    "Po’s Kung Fu Training Camp",
+    "Poppy’s Playground",
+    "King Harold’s Swamp Symphony"
+   ],
+   "Hollywood": [
+    "Mel's Drive-In™",
+    "Schwab's Pharmacy"
+   ]
+  }
+ },
+ "267615cc-8943-4c2a-ae2c-5da728ca591f": {
+  "name": "Islands of Adventure",
+  "lands": {
+   "Port of Entry": [
+    "Confisco Grille™",
+    "Croissant Moon Bakery™"
+   ],
+   "Marvel Super Hero Island": [
+    "The Incredible Hulk Coaster®",
+    "The Amazing Adventures of Spider-Man®",
+    "Doctor Doom's Fearfall®",
+    "Storm Force Accelatron®",
+    "Captain America Diner®",
+    "Cafe 4™"
+   ],
+   "Toon Lagoon": [
+    "Dudley Do-Right's Ripsaw Falls®",
+    "Popeye & Bluto's Bilge-Rat Barges®",
+    "Me Ship, The Olive®",
+    "Blondie's: Home of the Dagwood",
+    "Wimpy's"
+   ],
+   "Skull Island": [
+    "Skull Island: Reign of Kong"
+   ],
+   "Jurassic Park": [
+    "Jurassic World VelociCoaster",
+    "Jurassic Park River Adventure",
+    "Camp Jurassic™",
+    "Pteranodon Flyers",
+    "Jurassic Park Discovery Center",
+    "Thunder Falls Terrace™"
+   ],
+   "Hogsmeade": [
+    "Hagrid's Magical Creatures Motorbike Adventure™",
+    "Harry Potter and the Forbidden Journey™",
+    "Flight of the Hippogriff™",
+    "Hogwarts Express™ - Hogsmeade™ Station",
+    "Three Broomsticks™"
+   ],
+   "The Lost Continent": [
+    "Mythos Restaurant™"
+   ],
+   "Seuss Landing": [
+    "The Cat in The Hat™",
+    "One Fish, Two Fish, Red Fish, Blue Fish™",
+    "Caro-Seuss-el™",
+    "If I Ran The Zoo™",
+    "The High in the Sky Seuss Trolley Train Ride!™",
+    "Circus McGurkus Cafe Stoo-pendous™"
+   ]
+  }
+ },
+ "12dbb85b-265f-44e6-bccf-f1faa17211fc": {
+  "name": "Epic Universe",
+  "lands": {
+   "Celestial Park": [
+    "Stardust Racers",
+    "Constellation Carousel",
+    "Astronomica"
+   ],
+   "Dark Universe": [
+    "Monsters Unchained: The Frankenstein Experiment",
+    "Curse of the Werewolf"
+   ],
+   "Super Nintendo World": [
+    "Mario Kart™: Bowser's Challenge",
+    "Yoshi's Adventure™",
+    "Mine-Cart Madness™",
+    "Bowser Jr. Challenge"
+   ],
+   "Ministry of Magic": [
+    "Harry Potter and the Battle at the Ministry™"
+   ],
+   "Isle of Berk": [
+    "Hiccup's Wing Gliders",
+    "Dragon Racer's Rally",
+    "Fyre Drill",
+    "Viking Training Camp"
+   ]
+  }
+ },
+ "bc4005c5-8c7e-41d7-b349-cdddf1796427": {
+  "name": "Universal Studios Hollywood",
+  "lands": {
+   "Upper Lot": [
+    "Despicable Me Minion Mayhem",
+    "The Secret Life of Pets: Off the Leash",
+    "Kung Fu Panda Adventure",
+    "Studio Tour"
+   ],
+   "Springfield": [
+    "The Simpsons Ride™"
+   ],
+   "Wizarding World of Harry Potter": [
+    "Harry Potter and the Forbidden Journey™",
+    "Flight of the Hippogriff™",
+    "Ollivanders™"
+   ],
+   "Super Nintendo World": [
+    "Mario Kart™: Bowser’s Challenge",
+    "Bowser Jr. Challenge"
+   ],
+   "Lower Lot": [
+    "Jurassic World - The Ride",
+    "Revenge of the Mummy – The Ride",
+    "TRANSFORMERS™: The Ride-3D"
+   ]
+  }
+ },
+ "27d64dee-d85e-48dc-ad6d-8077445cd946": {
+  "name": "SeaWorld Orlando",
+  "lands": {}
+ },
+ "9e2867f8-68eb-454f-b367-0ed0fd72d72a": {
+  "name": "Aquatica Orlando",
+  "lands": {}
+ },
+ "91f5c7f3-373b-42e1-9f24-f769e4a3f7da": {
+  "name": "Discovery Cove",
+  "lands": {}
+ },
+ "75122979-ddea-414d-b633-6b09042a227c": {
+  "name": "SeaWorld San Diego",
+  "lands": {}
+ },
+ "fe78a026-b91b-470c-b906-9d2266b692da": {
+  "name": "Volcano Bay",
+  "lands": {}
+ },
+ "b070cbc5-feaa-4b87-a8c1-f94cca037a18": {
+  "name": "Typhoon Lagoon",
+  "lands": {}
+ },
+ "ead53ea5-22e5-4095-9a83-8c29300d7c63": {
+  "name": "Blizzard Beach",
+  "lands": {}
+ }
+}

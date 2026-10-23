@@ -2,6 +2,9 @@
 // the Worker (what to allow) and the owner dashboard (/api/perms feeds its checkboxes).
 export const PERMS = [
   { k: "scene", g: "Stream", l: "Switch to LIVE scene button", h: "Switches OBS to the live scene with overlays off. Never starts or stops the stream." },
+  { k: "status", g: "Stream", l: "See stream status", h: "Current scene, live or not, and whether the mic is muted. Look only." },
+  { k: "snap", g: "Stream", l: "Snapshot", h: "Ask for a small still picture of what is on stream right now" },
+  { k: "loc", g: "Stream", l: "See location", h: "Your exact position and nearby rides while the Location scene is on air (private check view). Look only." },
   { k: "now.set", g: "NOW card", l: "Put things on NOW", h: "Pick what you're doing, start a stop, the ▶ buttons" },
   { k: "now.done", g: "NOW card", l: "Done / Clear", h: "Check off NOW (starts NEXT if it's due in 5 min)" },
   { k: "now.pause", g: "NOW card", l: "Pause and Resume", h: "Take NOW off stream for a bit and bring it back" },
@@ -18,19 +21,21 @@ export const PERMS = [
   { k: "park.list", g: "Parks", l: "Add or remove today's parks", h: "Which parks are on today's list" },
 ];
 export const PERM_KEYS = PERMS.map(p => p.k);
+// Stream abilities send commands to the home PC or only look; they never change the saved plan.
+export const STREAM_KEYS = PERMS.filter(p => p.g === "Stream").map(p => p.k);
 export const ROLES = {
   viewer: { label: "Viewer", what: "sees what viewers see, can't change anything", perms: [] },
-  mod: { label: "Mod", what: "Switch to LIVE scene + NOW + add, change and remove plan stops", perms: ["scene", "now.set", "now.done", "now.pause", "now.detail", "next", "plan.add", "plan.time", "plan.check", "plan.remove"] },
-  stream: { label: "Scene only", what: "Switch to LIVE scene button only", perms: ["scene"] },
-  live: { label: "Live helper", what: "Switch to LIVE scene + runs NOW, NEXT and the countdown stop", perms: ["scene", "now.set", "now.done", "now.pause", "now.detail", "next", "cd.pick"] },
+  mod: { label: "Mod", what: "Switch to LIVE scene + stream status + NOW + add, change and remove plan stops", perms: ["scene", "status", "now.set", "now.done", "now.pause", "now.detail", "next", "plan.add", "plan.time", "plan.check", "plan.remove"] },
+  stream: { label: "Scene only", what: "Switch to LIVE scene button and stream status", perms: ["scene", "status"] },
+  live: { label: "Live helper", what: "Switch to LIVE scene + stream status + runs NOW, NEXT and the countdown stop", perms: ["scene", "status", "now.set", "now.done", "now.pause", "now.detail", "next", "cd.pick"] },
   planner: { label: "Planner", what: "builds the plan, picks NEXT and the countdown, nothing live", perms: ["next", "cd.pick", "plan.add", "plan.time", "plan.check", "plan.remove"] },
-  cohost: { label: "Co-host", what: "everything", perms: PERM_KEYS },
+  cohost: { label: "Co-host", what: "everything except See location", perms: PERM_KEYS.filter(k => k !== "loc") },
 };
-// Older mods saved "plan" = everything except GO LIVE
+// Older mods saved "plan" = everything except the Stream abilities
 export function expandPerms(list) {
   const out = new Set();
   for (const p of list || []) {
-    if (p === "plan") PERM_KEYS.filter(k => k !== "scene").forEach(k => out.add(k));
+    if (p === "plan") PERM_KEYS.filter(k => !STREAM_KEYS.includes(k)).forEach(k => out.add(k));
     else if (PERM_KEYS.includes(p) || p === "*") out.add(p);
   }
   return [...out];
@@ -67,13 +72,14 @@ export function neededPerms(a, b) {
   if (!same(a.nextId, b.nextId)) { changed = true; need("next", "now.set", "now.done"); }
   if (!same(a.hereId, b.hereId)) { changed = true; need("park.here", "park.list", "now.set"); }
   if (!same(a.parks, b.parks)) { changed = true; need("park.list"); }
+  if (!same(a.heading || "", b.heading || "")) { changed = true; need("next", "now.set"); }   // the location card's "Heading to" line
   const sa = a.settings || {}, sb = b.settings || {};
   for (const k of new Set([...Object.keys(sa), ...Object.keys(sb)])) {
     if (same(sa[k], sb[k])) continue;
     changed = true;
-    need(k === "next" || k === "onLive" ? "display" : "cd.settings");
+    need(k === "next" || k === "onLive" || k === "heading" ? "display" : "cd.settings");
   }
-  const skip = new Set(["plan", "cur", "paused", "nextId", "hereId", "parks", "settings", "display", "updated", "updatedBy", "v"]);
+  const skip = new Set(["plan", "cur", "paused", "nextId", "hereId", "parks", "heading", "settings", "display", "updated", "updatedBy", "v"]);
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) if (!skip.has(k) && !same(a[k], b[k])) { changed = true; need("plan.add"); }
   // nothing changed but the stream card (live wait times refreshing): only someone running NOW sends those
   if (!changed && !same(a.display, b.display)) need("now.set", "now.detail", "now.done");

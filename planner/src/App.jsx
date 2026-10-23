@@ -1,9 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { PERMS } from "./perms.js";
+import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { PERMS, STREAM_KEYS } from "./perms.js";
 // what the signed-in person may change (Cierra: everything; a mod: what the owner dashboard gave them)
 const CanCtx = createContext(() => true);
 import { loadDestinations, loadPark, nowIn, clock } from "./parks.js";
-import { getCode, setCode, whoami, fetchState, saveState, sendCmd, getMods, putMods, liveLink } from "./api.js";
+import { getCode, setCode, whoami, fetchState, saveState, sendCmd, getMods, putMods, liveLink, setLocTest, sendPhoneFix, setLocConfig, setLocParty } from "./api.js";
 import { CONCERT, bandFor } from "./concerts.js";
 
 const CATS = [
@@ -426,9 +426,16 @@ function CountdownLine({ S, update, tz, on }) {
   );
 }
 
-// ---------- the big button: whatever scene is up, go to the live scene (camera, no overlays) ----------
-function GoLive({ bot, toast }) {
+// ---------- the Stream box (mod view): what's on air, a snapshot, and the big LIVE button ----------
+// Each part shows only if the owner gave this mod that ability. Whatever scene is up, the big button goes to the
+// live scene (camera, no overlays). It never starts or stops the stream.
+function StreamBox({ bot, shot, setShot, toast }) {
+  const can = useContext(CanCtx);
   const [busy, setBusy] = useState(false);
+  const [snapping, setSnapping] = useState(false);
+  const [, tick] = useState(0);
+  useEffect(() => { const t = setInterval(() => tick(n => n + 1), 15000); return () => clearInterval(t); }, []);   // so "fresh" goes stale on its own
+  useEffect(() => { if (shot) setSnapping(false); }, [shot]);
   const fresh = bot && bot.at && Date.now() - bot.at < 120000;
   const onLive = fresh && /^live$/i.test(bot.scene || "");
   const go = async () => {
@@ -437,11 +444,221 @@ function GoLive({ bot, toast }) {
     setBusy(false);
     toast(r.ok ? "Switching to LIVE…" : (r.error || "Couldn't reach the home PC"));
   };
+  const snap = async () => {
+    setSnapping(true); setShot(null);
+    const r = await sendCmd("snap.take");
+    if (!r.ok) { setSnapping(false); toast(r.error || "Couldn't reach the home PC"); return; }
+    setTimeout(() => setSnapping(s => { if (s) toast("No snapshot came back from the home PC"); return false; }), 9000);
+  };
+  const mic = fresh && bot.mic;
   return (
-    <div className="golive">
-      <button className={`btn golive-btn ${onLive ? "is-live" : ""}`} onClick={go} disabled={busy}>{busy ? "Sending…" : onLive ? "✓ On LIVE scene (no overlays)" : "🎥 Switch to LIVE scene (overlays off)"}</button>
-      <div className="golive-status">{fresh ? <>On air: <b>{bot.scene || "?"}</b>{bot.streaming === false ? " · not streaming" : ""}</> : "Home PC status unknown (helper not heard from yet)"}</div>
+    <div className="golive streambox">
+      {(can("status") || can("scene")) && (
+        <div className="stream-status">
+          {fresh ? <>
+            <span className="chip">On air: <b>{bot.scene || "?"}</b></span>
+            <span className={`chip ${bot.streaming ? "live" : ""}`}>{bot.streaming ? "● LIVE" : bot.streaming === false ? "Not streaming" : "Stream: ?"}</span>
+            {can("status") && <span className={`chip ${mic ? (mic.muted ? "bad" : "good") : ""}`}>{mic ? (mic.muted ? "🔇 Mic muted" : "🎙️ Mic on") : "Mic: not set up"}</span>}
+          </> : <span className="chip">Home PC status unknown (is OBS open?)</span>}
+        </div>
+      )}
+      {can("scene") && <button className={`btn golive-btn ${onLive ? "is-live" : ""}`} onClick={go} disabled={busy}>{busy ? "Sending…" : onLive ? "✓ On LIVE scene (no overlays)" : "🎥 Switch to LIVE scene (overlays off)"}</button>}
+      {can("snap") && <>
+        <button className="btn snap-btn" onClick={snap} disabled={snapping}>{snapping ? "Getting snapshot…" : shot ? "📸 New snapshot" : "📸 Snapshot of the stream"}</button>
+        {shot && <div className="snap"><img src={shot.image} alt="What is on stream right now" /><div className="snap-meta">Taken {new Date(shot.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })} <button className="link" onClick={() => setShot(null)}>Hide</button></div></div>}
+      </>}
     </div>
+  );
+}
+
+// ---------- Location scene: preview + private check view (owner, and mods with "See location") ----------
+// Real map (Leaflet, served from /vendor/leaflet) loaded only when the Location box is opened
+function useLeaflet(want) {
+  const [LF, setLF] = useState(() => (window.L && window.L.map ? window.L : null));
+  useEffect(() => {
+    if (!want || LF) return;
+    if (!document.querySelector("link[data-leaflet]")) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/vendor/leaflet/leaflet.css"; l.dataset.leaflet = "1"; document.head.appendChild(l); }
+    let sc = document.querySelector("script[data-leaflet]");
+    if (!sc) { sc = document.createElement("script"); sc.src = "/vendor/leaflet/leaflet.js"; sc.dataset.leaflet = "1"; document.head.appendChild(sc); }
+    const on = () => { if (window.L && window.L.map) setLF(window.L); };
+    sc.addEventListener("load", on); on();
+    return () => sc.removeEventListener("load", on);
+  }, [want, LF]);
+  return LF;
+}
+const M_PER_DEG = 6371000 * Math.PI / 180;
+// your position, the 25 m "close" ring, the 100 m ring and the nearest spots, on a street or satellite map
+function LocMap({ LF, c, onTap }) {
+  const el = useRef(null), m = useRef(null), tapRef = useRef(onTap);
+  tapRef.current = onTap;
+  useEffect(() => {
+    if (!LF || !el.current || m.current) return;
+    const map = LF.map(el.current, { maxZoom: 20, zoomSnap: 0.5, attributionControl: true });
+    const streets = LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, attribution: "&copy; OpenStreetMap" });
+    const sat = LF.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, maxNativeZoom: 19, attribution: "Imagery &copy; Esri" });
+    let base = "map"; try { base = localStorage.getItem("parkday-locmap") || "map"; } catch {}
+    (base === "sat" ? sat : streets).addTo(map);
+    LF.control.layers({ "Map": streets, "Satellite": sat }, null, { collapsed: true }).addTo(map);
+    map.on("baselayerchange", e => { try { localStorage.setItem("parkday-locmap", e.name === "Satellite" ? "sat" : "map"); } catch {} });
+    map.on("click", e => { if (tapRef.current) tapRef.current(e.latlng); });
+    m.current = { map, layer: LF.layerGroup().addTo(map), first: true };
+    return () => { map.remove(); m.current = null; };
+  }, [LF]);
+  useEffect(() => {
+    const x = m.current; if (!x || !c || !Number.isFinite(c.lat)) return;
+    const here = [c.lat, c.lon], k = Math.cos(c.lat * Math.PI / 180);
+    x.layer.clearLayers();
+    LF.circle(here, { radius: 100, color: "#0B1E2E", weight: 1.5, dashArray: "4 5", fill: false, interactive: false }).addTo(x.layer);
+    LF.circle(here, { radius: 25, color: "#FFC933", weight: 2.5, fillColor: "#FFC933", fillOpacity: 0.12, interactive: false }).addTo(x.layer);
+    const col = { A: "#1FB8B4", R: "#FF4F9A", S: "#7A3CF0", C: "#FFC933" };
+    (c.nearby || []).forEach((s, i) => {
+      const ll = [c.lat + s.dy / M_PER_DEG, c.lon + s.dx / (M_PER_DEG * k)];
+      const dotM = LF.circleMarker(ll, { radius: i < 3 ? 8 : 6, color: "#0B1E2E", weight: 2, fillColor: col[s.t] || "#9FC4CF", fillOpacity: 0.95 })
+        .bindPopup(s.n.replace(/[<>&]/g, "") + " · " + s.d + " m").addTo(x.layer);
+      if (i < 3) dotM.bindTooltip(String(i + 1), { permanent: true, direction: "right", offset: [6, 0], className: "loc-tip num" });
+    });
+    LF.circleMarker(here, { radius: 9, color: "#FF4F9A", weight: 4, fillColor: "#fff", fillOpacity: 1, interactive: false }).addTo(x.layer);
+    if (x.first) { x.map.setView(here, 18); x.first = false; } else if (!x.map.getBounds().pad(-0.2).contains(here)) x.map.panTo(here);
+  }, [LF, c]);
+  return <div className="loc-lmap" ref={el} />;
+}
+
+// Test mode GPS from this phone's browser: sends at most every 5 s (sooner only after moving 5 m), stops when test mode ends
+function usePhoneGps(active) {
+  const [st, setSt] = useState({ on: false, msg: "", acc: null, at: 0 });
+  const watch = useRef(null), last = useRef(null);
+  const stop = useCallback((tell = true) => {
+    if (watch.current != null) { try { navigator.geolocation.clearWatch(watch.current); } catch {} watch.current = null; }
+    if (tell && last.current) sendPhoneFix({ stop: true });
+    last.current = null; setSt({ on: false, msg: "", acc: null, at: 0 });
+  }, []);
+  const start = useCallback(() => {
+    if (!("geolocation" in navigator)) { setSt(s => ({ ...s, msg: "This browser has no GPS access." })); return; }
+    setSt({ on: true, msg: "Asking for your location…", acc: null, at: 0 });
+    sendPhoneFix({ resume: true });   // undo a map-tap pin so this phone's real position is used again
+    watch.current = navigator.geolocation.watchPosition(async p => {
+      const c = p.coords, now = Date.now(), l = last.current;
+      const moved = l ? Math.hypot((c.latitude - l.lat) * 111320, (c.longitude - l.lon) * 111320 * Math.cos(c.latitude * Math.PI / 180)) : 1e9;
+      setSt(s => ({ ...s, acc: Math.round(c.accuracy) }));
+      if (l && (now - l.t < 5000 || (moved < 5 && now - l.t < 20000))) return;
+      last.current = { lat: c.latitude, lon: c.longitude, t: now };
+      const r = await sendPhoneFix({ latitude: c.latitude, longitude: c.longitude, speed: c.speed != null && c.speed >= 0 ? c.speed : 0, accuracy: c.accuracy, timestamp: (Math.abs(p.timestamp - now) < 30000 ? p.timestamp : now) / 1000 });   // some browsers stamp positions oddly; fall back to the phone's clock
+      setSt(s => ({ ...s, msg: r.ok ? "" : r.error, at: r.ok ? Date.now() : s.at }));
+      if (r.off) stop(false);
+    }, e => setSt(s => ({ ...s, msg: e.code === 1 ? "Location is blocked for this site. Allow it in the phone's settings (Safari: aA, Website Settings, Location), then try again." : "No GPS fix yet. Step outside or wait a moment." })),
+    { enableHighAccuracy: true, maximumAge: 2000, timeout: 30000 });
+  }, [stop]);
+  useEffect(() => { if (!active && watch.current != null) stop(false); }, [active, stop]);
+  useEffect(() => () => { if (watch.current != null) navigator.geolocation.clearWatch(watch.current); }, []);
+  return { ...st, start, stop };
+}
+
+// The location card's "Heading to" line: what you type here, else your NEXT stop
+function HeadingRow({ S, update, nextLabel, canEdit, canShow }) {
+  const [txt, setTxt] = useState(S.heading || "");
+  useEffect(() => { setTxt(S.heading || ""); }, [S.heading]);
+  const on = !S.settings || S.settings.heading !== false;
+  const save = v => update(s => { if (v) s.heading = v.slice(0, 80); else delete s.heading; return s; }, v ? "Heading to: " + v : "Heading to: back to your NEXT stop");
+  return (
+    <div className="loc-head">
+      <div className="ctl-row"><span><b>Heading to</b> line under the card</span>
+        {canShow ? <div className="seg ctl">{[[true, "On"], [false, "Off"]].map(([v, l]) => <button key={l} className={on === v ? "on" : ""} onClick={() => update(s => { s.settings = { ...(s.settings || {}), heading: v }; return s; }, "Heading to line " + (v ? "on" : "off"))}>{l}</button>)}</div> : <span className="dim">{on ? "On" : "Off"}</span>}
+      </div>
+      {canEdit && on && <div className="row-wrap">
+        <input className="input" value={txt} maxLength={80} placeholder={nextLabel ? "Your NEXT stop: " + nextLabel : "Type where you're heading"} onChange={e => setTxt(e.target.value)} onKeyDown={e => { if (e.key === "Enter") save(txt.trim()); }} />
+        <button className="btn small" onClick={() => save(txt.trim())}>Save</button>
+        {S.heading && <button className="btn small ghost" onClick={() => { setTxt(""); save(""); }}>Use NEXT</button>}
+      </div>}
+      {on && <p className="hint tight">Shows: <b>{S.heading || nextLabel || "nothing yet (no NEXT stop)"}</b>{S.heading ? "" : nextLabel ? " (your NEXT stop)" : ""}</p>}
+    </div>
+  );
+}
+
+const MAP_COLORS = [["#1FB8B4", "Teal"], ["#FFC933", "Gold"], ["#FF6B6B", "Coral"], ["#8B5CF6", "Purple"], ["#FFFFFF", "White"]];
+function LocationBox({ loc, owner, toast, S, update, nextLabel, can }) {
+  const [open, setOpen] = useState(false);
+  const LF = useLeaflet(open);
+  const testing = !!loc.test;
+  const gps = usePhoneGps(testing && owner);
+  const [busy, setBusy] = useState(false);
+  const toggleTest = async on => { setBusy(true); if (!on) gps.stop(); const r = await setLocTest(on); setBusy(false); if (!r.ok) toast("Test mode: " + r.error); else if (on) setOpen(true); };
+  // test mode: tap the map to pretend you're there (stops this phone's GPS so it doesn't move you back)
+  const pretend = async ll => { if (gps.on) gps.stop(false); const r = await sendPhoneFix({ latitude: ll.lat, longitude: ll.lng, speed: 0, src: "map" }); if (!r.ok) toast("Test: " + r.error); };
+  const until = testing ? new Date(loc.test.until).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+  const [, tick] = useState(0);
+  const boxRef = useRef(null);
+  const [scale, setScale] = useState(0.18);
+  useEffect(() => { const t = setInterval(() => tick(n => n + 1), 5000); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    if (!open || !boxRef.current) return;
+    const el = boxRef.current, fit = () => setScale(el.clientWidth / 1920);
+    fit(); const ro = new ResizeObserver(fit); ro.observe(el); return () => ro.disconnect();
+  }, [open]);
+  const c = loc.check;
+  const age = c && c.at ? Math.max(0, Math.round((Date.now() - c.at) / 1000)) : null;
+  const stale = age !== null && age > 120;
+  const R = 100;   // the little map shows 100 m around you
+  const dot = x => ({ cx: 110 + (x.dx / R) * 100, cy: 110 - (x.dy / R) * 100 });
+  return (
+    <details className="locbox" open={open} onToggle={e => setOpen(e.currentTarget.open)}>
+      <summary>
+        <span className="label">📍 Location scene</span>
+        <span className={`chip ${loc.on ? "good" : testing ? "test" : ""}`}>{loc.on ? (stale ? "Updating · no GPS signal" : "Updating") : testing ? (gps.on ? "Test · phone GPS" : "Test mode") : loc.enabled === false ? "Location off" : "Not live"}</span>
+      </summary>
+      {open && <div className="loc-in">
+        {owner && <div className="ctl-row loc-master"><span><b>Location</b> <small className="dim">{loc.enabled ? "(GPS used while you're live)" : "(off: GPS from Moblin is ignored)"}</small></span>
+          <div className="seg ctl">{[[true, "On"], [false, "Off"]].map(([v, l]) => <button key={l} className={!!loc.enabled === v ? "on" : ""} onClick={async () => { if (!!loc.enabled === v) return; const r = await setLocConfig({ enabled: v }); toast(r.ok ? "Location " + (v ? "on" : "off") : "Location: " + r.error); }}>{l}</button>)}</div>
+        </div>}
+        <div className="loc-pv" ref={boxRef}><iframe title="Location scene preview" src={"/location?preview=1&key=" + encodeURIComponent(getCode())} style={{ transform: `scale(${scale})` }} /></div>
+        {owner && <div className="loc-test">
+          {!testing ? <>
+            <button className="btn small" disabled={busy} onClick={() => toggleTest(true)}>🧪 Start test mode</button>
+            <p className="hint tight">Try it anywhere, without being live. The OBS location card shows the test (tagged TEST) only while OBS is not streaming; once you go live, test data is hidden. Turns itself off after 3 hours.</p>
+          </> : <>
+            <div className="row-wrap">
+              {!gps.on ? <button className="btn small" onClick={gps.start}>📡 Use this phone's GPS</button> : <button className="btn small ghost" onClick={() => gps.stop()}>Stop phone GPS</button>}
+              <button className="btn small ghost" disabled={busy} onClick={() => toggleTest(false)}>End test</button>
+            </div>
+            <p className="hint tight">Test mode on until {until}. {gps.on ? <>Sending this phone's location{gps.acc != null ? <> (accurate to {gps.acc} m)</> : null}. Keep this screen open while you walk.</> : <>Use this phone's GPS, or go live in Moblin and its GPS is used too.</>}{loc.test && loc.test.pinned ? " Pinned to a map tap for 5 minutes; tap Use this phone's GPS to use your real position again." : c ? " Tap the map to pretend you're somewhere else." : ""} Not near a park? Use the dashboard's map: Test a spot, then tap anywhere.</p>
+            {gps.msg && <p className="hint tight warn">{gps.msg}</p>}
+          </>}
+        </div>}
+        {loc.on && <p className="hint tight">Location updates the whole time you're live. Viewers see the card only on the OBS scene <b>{loc.locScene || "location"}</b>{loc.scene ? <> (showing now: <b>{loc.scene}</b>{loc.scene === (loc.locScene || "location") ? ", card on screen" : ", card hidden"})</> : null}.</p>}
+        {!loc.on && !testing && <p className="hint tight">{loc.enabled === false ? <>Location is turned <b>off</b>. {owner ? "Turn it on with the switch above. " : "Cierra can turn it on in the app. "}</> : <>Not live, so GPS isn't used. </>}Once you're live, location updates on every scene, and the card shows only on the OBS scene <b>{loc.locScene || "location"}</b>{loc.scene ? <> (showing now: <b>{loc.scene}</b>)</> : null}.</p>}
+        {!loc.on && testing && !owner && <p className="hint tight">Cierra is testing. Test data never shows while OBS is streaming.</p>}
+        {loc.on && !c && <p className="hint tight">Waiting for the first GPS update from Moblin (it sends while you are live, as soon as it has a position).</p>}
+        {!loc.on && testing && !c && <p className="hint tight">Waiting for the first GPS update. The map appears with it.</p>}
+        {!loc.on && !testing && !c && owner && <p className="hint tight">The map appears with the first GPS update: start test mode, then tap Use this phone's GPS.</p>}
+        {c && <div className="loc-check">
+          {LF ? <LocMap LF={LF} c={c} onTap={owner && testing ? pretend : null} /> : <svg viewBox="0 0 220 220" className="loc-map" role="img" aria-label="Your position and nearby spots">
+              <circle cx="110" cy="110" r="100" className="ring" /><circle cx="110" cy="110" r="25" className="ring close" />
+              {(c.nearby || []).filter(x => Math.abs(x.dx) <= R && Math.abs(x.dy) <= R).map((x, i) => <g key={i}><circle {...dot(x)} r={i < 3 ? 4.5 : 3} className={`spot t${x.t}`} />{i < 3 && <text x={dot(x).cx + 6} y={dot(x).cy + 4}>{i + 1}</text>}</g>)}
+              <circle cx="110" cy="110" r="6" className="me" />
+            </svg>}
+          <div className="loc-facts">
+            <div><b>{c.travel ? (c.via ? "On the " + c.via : "Travelling") : c.near ? (c.how === "riding" ? "Riding " : c.how === "at" ? "At " : "Near ") + c.near : c.land || c.park || c.place || c.area || "Outside the parks"}</b></div>
+            <div className="dim">{[c.near && c.land, c.park].filter(Boolean).join(" · ")}{c.pending ? ` · changing to ${c.pending}?` : ""}</div>
+            <ol>{(c.nearby || []).slice(0, 3).map((x, i) => <li key={i}>{x.n} <span className="dim">{x.d} m{x.land ? " · " + x.land : ""}</span></li>)}</ol>
+            <div className="dim small">{loc.src === "phone" ? "From this phone" : loc.src === "moblin" ? "From Moblin" : loc.src === "map" ? "From a map tap" : ""}{loc.src ? " · " : ""}last update {age}s ago{c.acc != null ? ` · accurate to ${c.acc} m` : ""}{c.speed != null ? ` · ${c.speed} m/s` : ""}. Inner ring 25 m, outer 100 m.</div>
+          </div>
+        </div>}
+        {owner && <div className="loc-opts loc-party">
+          <div className="ctl-row"><span><b>Party-only spots</b> <small className="dim">(Disney parties, After Hours, Halloween Horror Nights)</small></span>
+            <div className="seg ctl">{[["auto", "Auto"], ["on", "On"], ["off", "Off"]].map(([v, l]) => <button key={v} className={((loc.party && loc.party.mode) || "auto") === v ? "on" : ""} onClick={async () => { const r = await setLocParty(v); toast(r.ok ? "Party spots: " + l : "Party spots: " + r.error); }}>{l}</button>)}</div>
+          </div>
+          <p className="hint tight">{loc.party && loc.party.on ? <>Shown{loc.party.mode === "auto" ? <> (party night: {loc.party.why})</> : " until 4 AM"}.</> : loc.party && loc.party.mode === "off" ? <>Hidden until 4 AM.</> : <>Hidden. Auto shows them on a party night once regular hours end (day guests have left, so you're at the party). Tap On if you get in early.</>}</p>
+        </div>}
+        {owner && <div className="loc-opts">
+          <div className="ctl-row"><span><b>Round map</b> above the card <small className="dim">(shows your exact spot)</small></span>
+            <div className="seg ctl">{[[true, "On"], [false, "Off"]].map(([v, l]) => <button key={l} className={!!loc.map === v ? "on" : ""} onClick={async () => { const r = await setLocConfig({ map: v }); toast(r.ok ? "Round map " + (v ? "on" : "off") : "Map: " + r.error); }}>{l}</button>)}</div>
+          </div>
+          {loc.map && <div className="ctl-row"><span>Map style</span><div className="seg ctl">{[["photo", "Satellite"], ["map", "Drawn"]].map(([v, l]) => <button key={v} className={(loc.mapStyle || "photo") === v ? "on" : ""} onClick={async () => { const r = await setLocConfig({ mapStyle: v }); if (!r.ok) toast("Map: " + r.error); }}>{l}</button>)}</div></div>}
+          {loc.map && <div className="ctl-row"><span>Border colour</span><div className="swatches">{MAP_COLORS.map(([hex, name]) => <button key={hex} title={name} aria-label={name} className={`swatch ${(loc.mapColor || "#1FB8B4").toUpperCase() === hex ? "on" : ""}`} style={{ background: hex }} onClick={async () => { const r = await setLocConfig({ mapColor: hex }); if (!r.ok) toast("Map: " + r.error); }} />)}</div></div>}
+        </div>}
+        {S && <HeadingRow S={S} update={update} nextLabel={nextLabel} canEdit={owner || can("next") || can("now.set")} canShow={owner || can("display")} />}
+        <p className="small dim loc-credit">Place names and outlines: © OpenStreetMap contributors (ODbL). Round map: USGS, public domain. Ride and show data: ThemeParks.wiki.</p>
+      </div>}
+    </details>
   );
 }
 
@@ -568,21 +785,25 @@ export default function App() {
 
   // who is signed in (Cierra or a mod) + live link: changes from other phones/mods and the home PC's scene
   const [me, setMe] = useState({ role: "owner", name: "Cierra", perms: ["*"] });
-  const [bot, setBot] = useState(null);   // { scene, streaming, at } from the home PC helper
+  const [bot, setBot] = useState(null);   // { scene, streaming, mic, at } from the home PC (the OBS bridge dock)
+  const [shot, setShot] = useState(null);   // { image, at }: the last snapshot this person asked for
+  const [loc, setLoc] = useState(null);     // Location scene check view (owner, mods with "See location")
   useEffect(() => { if (authed) whoami().then(setMe).catch(() => {}); }, [authed]);
   useEffect(() => {
     if (!authed) return;
     return liveLink(m => {
       if (m.type === "state" && m.state && !dirty.current) setS(prev => (m.state.updated > (prev.updated || 0) ? normalize(m.state) : prev));
       if (m.type === "status") setBot(m);
-      if (m.type === "result") { toast(m.ok ? (m.msg || "Done on the home PC") : "Home PC: " + (m.error || "that didn't work")); if (m.scene) setBot(b => ({ ...(b || {}), scene: m.scene, at: Date.now() })); }
+      if (m.type === "locCheck") setLoc(m);
+      if (m.type === "result" && m.action === "snap.take") { if (m.ok && /^data:image\//.test(m.image || "")) setShot({ image: m.image, at: Date.now() }); else toast("Snapshot: " + (m.error || "that didn't work")); }
+      else if (m.type === "result") { toast(m.ok ? (m.msg || "Done on the home PC") : "Home PC: " + (m.error || "that didn't work")); if (m.scene) setBot(b => ({ ...(b || {}), scene: m.scene, at: Date.now() })); }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
   const can = useCallback(p => me.role === "owner" || (me.perms || []).includes("*") || (me.perms || []).includes(p), [me]);
   const canRef = useRef(can); canRef.current = can;
-  // a mod with nothing but GO LIVE (or nothing at all) never saves; wait-time refreshes only from someone running NOW
-  const writer = me.role === "owner" || (me.perms || []).some(k => k !== "scene");
+  // a mod with nothing but Stream abilities (or nothing at all) never saves; wait-time refreshes only from someone running NOW
+  const writer = me.role === "owner" || (me.perms || []).some(k => !STREAM_KEYS.includes(k));
 
   // first load: take the server copy if it's newer
   useEffect(() => {
@@ -628,7 +849,8 @@ export default function App() {
     <CanCtx.Provider value={can}><div className="app">
       {updateReady && <button className="update-bar" onClick={() => location.reload()}>New version ready. Tap to update.</button>}
       <header className="top"><h1>Park <span>Day</span></h1>{me.role === "mod" && <span className="modtag">Mod: {me.name}</span>}<span className={`sync ${sync !== "ok" ? "wait" : ""}`}>{syncLabel}</span><SignOut /></header>
-      {me.role === "mod" && can("scene") && <GoLive bot={bot} toast={toast} />}
+      {me.role === "mod" && ["scene", "status", "snap"].some(k => can(k)) && <StreamBox bot={bot} shot={shot} setShot={setShot} toast={toast} />}
+      {loc && can("loc") && (loc.enabled || loc.test || me.role === "owner") && <LocationBox loc={loc} owner={me.role === "owner"} toast={toast} S={S} update={update} nextLabel={display.next ? display.next.label : ""} can={can} />}
       {tab === "now" && <NowTab {...{ S, here, data, parkData, display, update, q, setQ, showClosed, setShowClosed }} />}
       {tab === "plan" && <PlanTab {...{ S, here, parkData, update, seg, setSeg, q, setQ, planParkId, setPlanParkId, showClosed, setShowClosed }} />}
       {tab === "parks" && <ParksTab {...{ S, here, display, update, me }} />}
@@ -674,9 +896,15 @@ function NowTab({ S, here, data, parkData, display, update, q, setQ, showClosed,
   // Set NEXT from the panel under the card
   const nextTo = f => { act(s => setNext(s, tz, f), "Next: ", ""); setPickCat(null); setQ(""); };
   const stages = cur && N.item && N.item.n && DOING[N.cat] ? [["walk", "Walking there"], ["line", "In line"], ["doing", DOING[N.cat]]] : null;
-  const nextPool = pickCat === "__next" ? allItems.filter(i => ["A", "S", "R"].includes(i.t) && (showClosed || !isClosed(i)) && (!q || i.n.toLowerCase().includes(q.toLowerCase()))) : [];
+  // the whole list (it used to stop at 30, or 60 when searching): rides, then shows, then food, each A to Z
+  const TORD = { A: 0, S: 1, R: 2 };
+  const nextPool = pickCat === "__next" ? allItems.filter(i => ["A", "S", "R"].includes(i.t) && (showClosed || !isClosed(i)) && (!q || i.n.toLowerCase().includes(q.toLowerCase())))
+    .sort((a, b) => (TORD[a.t] - TORD[b.t]) || a.n.localeCompare(b.n)) : [];
   const nextPlan = pickCat === "__next" ? S.plan.filter(x => !x.done && x.id !== S.cur && inTripOf(S)(x) && (!q || x.name.toLowerCase().includes(q.toLowerCase()))).sort(byTime) : [];
-  const tapCat = x => { setQ(""); if (x.types.length) { setPickCat(pickCat === x.k ? null : x.k); return; } put({ name: x.label, type: "Q", cat: x.k, item: null }); };
+  const tapCat = x => { setQ("");
+    // already on a ride: the In line / On a ride tiles switch its stage (a tile for the stage it is already in still opens the picker, to choose a different ride)
+    if ((x.k === "line" || x.k === "ride") && cur && N.cat === "ride" && N.item && N.item.n) { const want = x.k === "line" ? "line" : "doing"; if (N.stage !== want) { update(s => { const p = nowStop(s); if (p) { p.stage = want; if (p.cat === "line") p.cat = "ride"; } return s; }, want === "line" ? "In line" : DOING.ride); setPickCat(null); return; } }
+    if (x.types.length) { setPickCat(pickCat === x.k ? null : x.k); return; } put({ name: x.label, type: "Q", cat: x.k, item: null }); };
   const isNow = n => !!(cur && cur.name === n);
   return (
     <main>
@@ -700,14 +928,14 @@ function NowTab({ S, here, data, parkData, display, update, q, setQ, showClosed,
             </button>))}</div></>}
           <p className="label gap">Anything at {multi ? "today's parks" : here ? here.name : "the park"}</p>
           {!loaded && <p className="empty">Loading park data…</p>}
-          <div className="list">{nextPool.slice(0, q ? 60 : 30).map(i => i.t === "S" ? (
+          <div className="list">{nextPool.map((i, k) => <Fragment key={i.pk + i.id}>{(k === 0 || nextPool[k - 1].t !== i.t) && <p className="label gap">{{ A: "Rides", S: "Shows", R: "Food and drink" }[i.t]} ({nextPool.filter(x => x.t === i.t).length})</p>}{i.t === "S" ? (
             <div key={i.pk + i.id} className="item block">
               <button className="nm-btn" onClick={() => { const t = (i.x || []).find(x => x >= nowIn(i.tz)) || ""; nextTo({ name: i.n, type: "S", time: t, pk: i.pk }); }}>
                 <span className="nm">{cleanShow(i.n)}<div className="meta">{i.pkName && <span className="tag park">{i.pkName}</span>}Tap the name for the next showing, or a time</div></span>
               </button>
               <div className="times">{i.x && i.x.length ? i.x.filter(x => x >= minusMin(nowIn(i.tz), 30)).map(x => <button key={x} className="time" onClick={() => nextTo({ name: i.n, type: "S", time: x, pk: i.pk })}>{clock(x)}</button>) : <span className="hint tight">No times today</span>}</div>
             </div>
-          ) : <ItemRow key={i.pk + i.id} i={i} tz={i.tz} sel={!!(nx && nx.name === i.n)} onClick={() => nextTo({ name: i.n, type: i.t, pk: i.pk, item: i.w != null ? { w: i.w } : null })} />)}
+          ) : <ItemRow key={i.pk + i.id} i={i} tz={i.tz} sel={!!(nx && nx.name === i.n)} onClick={() => nextTo({ name: i.n, type: i.t, pk: i.pk, item: i.w != null ? { w: i.w } : null })} />}</Fragment>)}
           {loaded && !nextPool.length && <div className="empty">Nothing matches.</div>}</div>
         </div>
       )}
